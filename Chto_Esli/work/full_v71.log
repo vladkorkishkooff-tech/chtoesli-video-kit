@@ -1,0 +1,8 @@
+START chan 11:48:52
+{"out":"/data/chtoesli/studio/_r_chan71.mp4","frames":1701,"workers":4,"render_s":579,"ms_per_frame":341,"errors":[]}
+../review/blackout_stil_kanala_v7_1.mp4: -16.04 LUFS, true peak -1.49 dBTP
+DONE chan 0 12:00:03
+START light 12:00:03
+{"out":"/data/chtoesli/studio/_r_light71.mp4","frames":1701,"workers":4,"render_s":568,"ms_per_frame":334,"errors":[]}
+../review/blackout_svetly_v7_1.mp4: -16.04 LUFS, true peak -1.49 dBTP
+DONE light 0 12:11:07

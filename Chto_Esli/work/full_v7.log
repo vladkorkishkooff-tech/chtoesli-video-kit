@@ -1,0 +1,8 @@
+START chan 21:23:23
+{"out":"/vercel/sandbox/data/chtoesli/studio/_r_chan7.mp4","frames":1701,"workers":4,"render_s":603,"ms_per_frame":354,"errors":[]}
+../review/blackout_stil_kanala_v7.mp4: -16.04 LUFS, true peak -1.49 dBTP
+DONE chan 0 21:34:58
+START light 21:34:58
+{"out":"/vercel/sandbox/data/chtoesli/studio/_r_light7.mp4","frames":1701,"workers":4,"render_s":600,"ms_per_frame":352,"errors":[]}
+../review/blackout_svetly_v7.mp4: -16.04 LUFS, true peak -1.49 dBTP
+DONE light 0 21:46:33

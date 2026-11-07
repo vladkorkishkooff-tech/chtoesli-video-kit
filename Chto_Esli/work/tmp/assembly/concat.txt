@@ -1,0 +1,2 @@
+file 'D:/Chanels/Chto_Esli/work/tmp/assembly/part1.mp4'
+file 'D:/Chanels/Chto_Esli/work/tmp/assembly/outro.mp4'
