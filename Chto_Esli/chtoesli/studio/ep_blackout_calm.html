@@ -1,0 +1,413 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>Блэкаут: семья — тушь и глина</title>
+<style>
+  @font-face { font-family: 'Hand'; src: url('fonts/Caveat.ttf'); font-weight: 400 700; }
+  :root { --ink: #141413; --clay: #D97757; --olive: #788C5D; --sky: #6A9BCC; --paper: #F4F2EB; --serif: Georgia, serif; }
+  html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: var(--paper); }
+  #stage { position: absolute; inset: 0; transform-origin: 50% 50%; }
+  svg { position: absolute; inset: 0; }
+</style>
+<script src="camlife.js"></script><script src="sfx.js"></script><script src="lib/oneline.js"></script><script src="lib/brush.js"></script><script src="lib/inkclay.js"></script><script src="lib/folk.js"></script>
+</head><body>
+<div id="stage">
+<svg id="svg" width="1080" height="1920" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="paperPat" width="512" height="512" patternUnits="userSpaceOnUse"><rect width="512" height="512" fill="#F4F2EB"/><rect width="512" height="512" filter="url(#fibre)"/></pattern>
+    <filter id="fibre" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9 .3" numOctaves="3" seed="6"/><feColorMatrix values="0 0 0 0 .42  0 0 0 0 .37  0 0 0 0 .3  0 0 0 .2 0"/></filter>
+    <filter id="inkRough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.5"/></filter>
+    <filter id="clayTex" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="11" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="5" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="9" result="n"/><feColorMatrix in="n" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .32 0" result="g"/>
+      <feComposite in="g" in2="d" operator="in" result="gi"/><feBlend in="d" in2="gi" mode="multiply"/>
+    </filter>
+  </defs>
+  <g id="world"></g>
+</svg>
+</div>
+<svg id="ui" width="1080" height="1920" viewBox="0 0 1080 1920" style="position:absolute;inset:0;pointer-events:none">
+  <defs><linearGradient id="band" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4F2EB" stop-opacity="0"/><stop offset=".2" stop-color="#F4F2EB"/></linearGradient>
+  <linearGradient id="bandT" x1="0" y1="0" x2="0" y2="1"><stop offset=".75" stop-color="#F4F2EB"/><stop offset="1" stop-color="#F4F2EB" stop-opacity="0"/></linearGradient></defs>
+  <rect x="0" y="1340" width="1080" height="580" fill="url(#band)"/>
+  <rect x="0" y="0" width="1080" height="300" fill="url(#bandT)"/>
+  <g id="hdg" font-family="Georgia" font-size="36"></g>
+  <path id="hl" d="M90 232 H990" stroke="#141413" stroke-width="2" fill="none"/>
+  <g id="mk"></g>
+  <circle id="iris" cx="540" cy="384" r="66" fill="#F4F2EB" style="display:none"/>
+  <g id="clock" style="display:none">
+    <circle cx="540" cy="384" r="66" fill="#F4F2EB" stroke="#141413" stroke-width="7"/>
+    <g stroke="#141413" stroke-width="5" stroke-linecap="round"><path d="M540 326 V336" transform="rotate(0 540 384)"/><path d="M540 326 V336" transform="rotate(30 540 384)"/><path d="M540 326 V336" transform="rotate(60 540 384)"/><path d="M540 326 V336" transform="rotate(90 540 384)"/><path d="M540 326 V336" transform="rotate(120 540 384)"/><path d="M540 326 V336" transform="rotate(150 540 384)"/><path d="M540 326 V336" transform="rotate(180 540 384)"/><path d="M540 326 V336" transform="rotate(210 540 384)"/><path d="M540 326 V336" transform="rotate(240 540 384)"/><path d="M540 326 V336" transform="rotate(270 540 384)"/><path d="M540 326 V336" transform="rotate(300 540 384)"/><path d="M540 326 V336" transform="rotate(330 540 384)"/></g>
+    <path id="ckH" d="M540 384 V350" stroke="#141413" stroke-width="9" stroke-linecap="round"/>
+    <path id="ckM" d="M540 384 V334" stroke="#D97757" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="540" cy="384" r="7" fill="#141413"/>
+    <text id="ckT" x="624" y="404" font-family="Hand" font-weight="700" font-size="52" fill="#141413">свет погас</text>
+  </g>
+  <g id="icons"><g data-x="150" style="display:none"><circle r="74" fill="#F4F2EB" stroke="#141413" stroke-width="6"/><path d="M0 -42 C26 -6 32 14 0 38 C-32 14 -26 -6 0 -42 Z" fill="#6A9BCC" stroke="#141413" stroke-width="5"/></g><g data-x="345" style="display:none"><circle r="74" fill="#F4F2EB" stroke="#141413" stroke-width="6"/><path d="M-22 -16 H22 V20 H-22 Z" fill="#3E4A5E" stroke="#141413" stroke-width="5"/><path d="M-10 -16 V-36 M10 -16 V-36 M0 20 C0 36 20 40 30 30" fill="none" stroke="#141413" stroke-width="5" stroke-linecap="round"/></g><g data-x="540" style="display:none"><circle r="74" fill="#F4F2EB" stroke="#141413" stroke-width="6"/><path d="M-24 -42 H24 Q32 -42 32 -34 V38 Q32 46 24 46 H-24 Q-32 46 -32 38 V-34 Q-32 -42 -24 -42 Z" fill="#ECE3D1" stroke="#141413" stroke-width="5"/><path d="M-32 -12 H32 M20 -32 V-22 M20 0 V22" stroke="#141413" stroke-width="5" stroke-linecap="round"/></g><g data-x="735" style="display:none"><circle r="74" fill="#F4F2EB" stroke="#141413" stroke-width="6"/><path d="M-16 30 C-28 4 -8 -6 -4 -30 C4 -12 12 -16 10 -36 C34 -10 30 18 16 30 Z" fill="#D97757" stroke="#141413" stroke-width="5"/><path d="M-42 -42 L42 42" stroke="#D97757" stroke-width="11" stroke-linecap="round"/></g><g data-x="930" style="display:none"><circle r="74" fill="#F4F2EB" stroke="#141413" stroke-width="6"/><path d="M-36 -18 C-12 -30 12 -6 36 -18 V30 C12 42 -12 18 -36 30 Z" fill="#788C5D" stroke="#141413" stroke-width="5"/><path d="M-36 6 C-12 -6 12 18 36 6" fill="none" stroke="#F4F2EB" stroke-width="4"/></g></g>
+  <g id="caps" font-family="Georgia" fill="#141413" text-anchor="middle" font-weight="700"></g>
+</svg>
+<script>
+const {cam, sfx, el, on, EASE, prog, clamp} = E;
+const TL = (() => { const x = new XMLHttpRequest(); x.open('GET', 'data/blackout_calm.timings.json', false); x.send(); return JSON.parse(x.responseText); })();
+const T = Object.fromEntries(TL.map((s) => [s.id, s.start]));
+const WD = (() => { const x = new XMLHttpRequest(); x.open('GET', 'data/blackout_calm.words.json', false); x.send(); return JSON.parse(x.responseText); })();
+const norm = (w) => w.toLowerCase().replace(/[.,:;!?—«»]/g, '').replace(/ё/g, 'е');
+/** Время слова диктора в сцене (первое совпадение из вариантов); нет — начало сцены. */
+const W = (scene, ...words) => { const c = words.map(norm), hit = (WD[scene] || []).find((w) => c.includes(norm(w[0]))); if (!hit) console.warn('нет слова', scene, words); return hit ? hit[1] : T[scene]; };
+const END = TL[TL.length - 1].start + TL[TL.length - 1].dur, DUR = END + 0.8;
+E.init({dur: DUR});
+const B = BRUSH(E), K = INKCLAY(E, B);
+const INK = '#141413', CLAY = '#D97757', CLAY2 = '#B4553A', SKIN = '#EFC9A8', SKY = '#6A9BCC', SKY2 = '#4E7DB0', OLIVE = '#788C5D', SAND = '#E9C46A', NIGHT = '#33476E', PAPER = '#F4F2EB';
+const R = (x, y, w, h, r = 0) => r ? `M${x + r} ${y}H${x + w - r}Q${x + w} ${y} ${x + w} ${y + r}V${y + h - r}Q${x + w} ${y + h} ${x + w - r} ${y + h}H${x + r}Q${x} ${y + h} ${x} ${y + h - r}V${y + r}Q${x} ${y} ${x + r} ${y}Z` : `M${x} ${y}H${x + w}V${y + h}H${x}Z`;
+const O = (cx, cy, rx, ry = rx) => `M${cx - rx} ${cy}a${rx} ${ry} 0 1 0 ${2 * rx} 0a${rx} ${ry} 0 1 0 ${-2 * rx} 0`;
+const {ink, clay, hatch, note} = K;
+const lerp = (a, b, u) => a + (b - a) * u;
+
+// ══ Экранный слой: шапка правила и подпись с маркером на сцену ═════════
+const ui = (id) => document.getElementById(id);
+const UB = BRUSH({...E, lineLayer: ui('mk'), defs: ui('ui').querySelector('defs'), on: (f) => E.on(f)});
+const HEAD = [[0, 'ЧТО ЕСЛИ…', 'свет отключат зимой'], [T.s03, 'ШАГ 1 ИЗ 5', 'вода'], [T.s04, 'ШАГ 2 ИЗ 5', 'розетки'], [T.s05, 'ШАГ 3 ИЗ 5', 'еда'], [T.s06, 'ШАГ 4 ИЗ 5', 'плита'], [T.s07, 'ШАГ 5 ИЗ 5', 'тепло'], [T.s08, 'ЧТО ЕСЛИ…', 'свет дали']];
+const heads = HEAD.map(([t0, a, b], i) => {
+  const g = el('g', {}, ui('hdg'));
+  el('text', {x: 90, y: 200, fill: '#788C5D', 'letter-spacing': 7}, g).textContent = a;
+  el('text', {x: 990, y: 200, 'text-anchor': 'end', 'font-style': 'italic', fill: INK}, g).textContent = b;
+  return {g, t0, t1: (HEAD[i + 1] || [DUR + 1])[0]};
+});
+const CAPS = {s01: ['Что если отключат свет —', 'и не скажут, на сколько?'], s02: ['Час или пара суток —', 'пять спокойных шагов'], s03: ['Сначала —', 'набери воды'],
+  s04: ['Технику — из розеток,', 'одну лампу оставь'], s05: ['Ешь сначала', 'из холодильника'], s06: ['Плитой не греться:', 'угарный газ не видно'],
+  s07: ['Тепло —', 'в одной комнате'], s08: ['Скорее всего, свет дадут', 'раньше. Тем лучше'], s09: ['Сохрани —', 'и пусть не пригодится']};
+const caps = TL.map((s) => {
+  const [a, b] = CAPS[s.id], g = el('g', {}, ui('caps'));
+  const c1 = el('text', {x: 540, y: 1448, 'font-size': Math.min(40, Math.round(800 / (a.length * 0.58)))}, g); c1.textContent = a;
+  const big = Math.min(50, Math.round(800 / (b.length * 0.6)));
+  const c2 = el('text', {x: 540, y: 1548, 'font-size': big, 'font-style': 'italic'}, g); c2.textContent = b;
+  const t0 = s.start, t1 = s.start + s.dur;
+  const w = Math.min(900, b.length * big * 0.58 + 60);
+  UB.stroke(`M${540 - w / 2} 1530 C${540 - w / 4} 1526 ${540 + w / 4} 1529 ${540 + w / 2} 1522`, t0 + 0.25, t0 + 0.55, {w: 34, color: 'rgba(217,119,87,0.62)', taper: [0.03, 0.06], until: t1 - 0.02, fade: (t) => 1 - EASE.io2(prog(t, t1 - 0.18, t1))});
+  return {g, c1, c2, t0, t1};
+});
+on((t) => {
+  heads.forEach((h) => { const a = EASE.o(prog(t, h.t0, h.t0 + 0.3)) * (1 - EASE.io2(prog(t, h.t1 - 0.2, h.t1))); h.g.style.opacity = a; h.g.style.display = a > 0.001 ? '' : 'none'; });
+  const hl = ui('hl'), L = hl.__L || (hl.__L = hl.getTotalLength()); hl.style.strokeDasharray = L; hl.style.strokeDashoffset = L * (1 - EASE.io2(prog(t, 0.05, 0.6)));
+  caps.forEach((c) => {
+    const vis = t >= c.t0 && t <= c.t1; c.g.style.display = vis ? '' : 'none'; if (!vis) return;
+    const out = 1 - EASE.io2(prog(t, c.t1 - 0.18, c.t1));
+    const q1 = EASE.o(prog(t, c.t0, c.t0 + 0.3)); c.c1.style.opacity = q1 * out; c.c1.setAttribute('transform', `translate(0 ${((1 - q1) * 26).toFixed(1)})`);
+    const q2 = clamp(prog(t, c.t0 + 0.42, c.t0 + 0.75)), k2 = EASE.back(q2); c.c2.style.opacity = Math.min(1, q2 * 3) * out;
+    c.c2.setAttribute('transform', `translate(540 1534) scale(${(1.3 - 0.3 * k2).toFixed(3)}) translate(-540 -1565)`);
+  });
+});
+
+
+// ══ Мир: квартира в разрезе — кухня 0, гостиная 1080, спальня 2160, ванная 3240 ══
+const F = FOLK(E);
+const FL = 1250, CE = 330;
+const t2 = T.s02, t3 = T.s03, t4 = T.s04, t5 = T.s05, t6 = T.s06, t7 = T.s07, t8 = T.s08, t9 = T.s09;
+const flat = K.place(0, t2 - 0.6, DUR + 1);
+const drawRoomShell = (x0, t0) => {
+  ink(flat, `M${x0} ${CE} H${x0 + 1080}`, t0, 0.3, 5);
+  ink(flat, `M${x0} ${FL} H${x0 + 1080}`, t0, 0.3, 5);
+  hatch(flat, `M${x0} ${FL + 2} H${x0 + 1080} V${FL + 44} H${x0} Z`, t0 + 0.1, t0 + 0.4, {angle: -40, gap: 11, w: 2});
+};
+const wallAt = (x, t0) => { clay(flat, `M${x - 12} ${CE} H${x + 12} V760 H${x - 12} Z`, t0, '#D8CDB8', 0, 0, {quiet: true}); ink(flat, `M${x - 12} ${CE} V760 H${x + 12} V${CE}`, t0, 0.25, 4); };
+// вступление: перо рисует всю квартиру слева направо, пока камера проходит по ней
+const K0 = t2 - 0.4, L0 = t2 + 0.6, B0 = t2 + 1.6, W0 = t2 + 2.4;
+// ── кухня
+drawRoomShell(0, K0); wallAt(1080, K0 + 0.1);
+clay(flat, R(110, 640, 230, 610, 26), K0, '#ECE3D1', 7, 6, {quiet: true}); ink(flat, R(110, 640, 230, 610, 26) + 'M110 820 H340', K0, 0.4, 6);
+ink(flat, R(300, 700, 16, 90, 7) + R(300, 860, 16, 160, 7), K0 + 0.2, 0.2, 4);
+[[150, 700, CLAY], [200, 740, OLIVE], [150, 770, SKY]].forEach(([x, y, c], i) => clay(flat, R(x, y, 30, 30, 7), K0 + 0.3 + i * 0.04, c, 3, 2, {quiet: true}));
+clay(flat, R(470, 430, 300, 300, 6), K0 + 0.05, NIGHT, 0, 0, {quiet: true}); ink(flat, R(470, 430, 300, 300, 6) + 'M620 430 V730 M470 580 H770', K0 + 0.05, 0.35, 5);
+ink(flat, 'M450 740 H790', K0 + 0.2, 0.2, 8);
+ink(flat, 'M480 1000 H880 M500 1000 V1250 M860 1000 V1250', K0 + 0.1, 0.35, 6);
+ink(flat, 'M412 1250 V890 M406 1122 H496 M488 1122 V1250', K0 + 0.15, 0.3, 6); // стул: спинка за спиной героя, сиденье на высоте его таза
+clay(flat, R(860, 960, 200, 290, 10), K0 + 0.1, '#F2EEE6', 6, 5, {quiet: true});
+ink(flat, R(860, 960, 200, 290, 10) + R(880, 1040, 160, 150, 10) + 'M868 1010 H1052', K0 + 0.1, 0.35, 5);
+ink(flat, O(910, 958, 32, 7) + O(1010, 958, 32, 7), K0 + 0.25, 0.2, 4);
+[890, 930, 970, 1010].forEach((x, i) => ink(flat, O(x, 985, 7), K0 + 0.3 + i * 0.03, 0.08, 3));
+ink(flat, 'M820 600 H1060 M840 600 L850 614 M1040 600 L1030 614', K0 + 0.3, 0.2, 5); // полка с консервами
+[[860, CLAY], [910, SAND], [960, OLIVE], [1010, CLAY]].forEach(([x, c], i) => { clay(flat, R(x - 18, 548, 36, 52, 6), K0 + 0.35 + i * 0.03, c, 3, 2, {quiet: true}); ink(flat, R(x - 18, 548, 36, 52, 6) + `M${x - 18} 560 H${x + 18} M${x - 18} 588 H${x + 18}`, K0 + 0.35 + i * 0.03, 0.12, 3); });
+// ── гостиная
+drawRoomShell(1080, L0); wallAt(2160, L0 + 0.1);
+clay(flat, R(1250, 430, 260, 300, 6), L0, NIGHT, 0, 0, {quiet: true}); ink(flat, R(1250, 430, 260, 300, 6) + 'M1380 430 V730 M1250 580 H1510', L0, 0.35, 5);
+clay(flat, 'M1130 1250 V1060 C1130 1030 1150 1020 1180 1020 H1480 C1510 1020 1530 1030 1530 1060 V1250 Z', L0 + 0.05, OLIVE, 7, 6, {quiet: true});
+ink(flat, 'M1130 1250 V1060 C1130 1030 1150 1020 1180 1020 H1480 C1510 1020 1530 1030 1530 1060 V1250 M1130 1140 H1530 M1330 1140 V1250', L0 + 0.05, 0.4, 5);
+ink(flat, R(1580, 1060, 280, 190, 8) + 'M1580 1150 H1860 M1720 1060 V1250', L0 + 0.1, 0.35, 5);
+ink(flat, R(1600, 860, 240, 170, 10) + 'M1720 1030 V1060', L0 + 0.15, 0.3, 5); hatch(flat, R(1614, 874, 212, 142, 6), L0 + 0.25, L0 + 0.5, {angle: -30, gap: 10, w: 2});
+clay(flat, R(1890, 1130, 70, 50, 10), L0 + 0.2, '#FBF6EA', 3, 2, {quiet: true}); ink(flat, R(1890, 1130, 70, 50, 10) + O(1912, 1155, 8) + O(1938, 1155, 8), L0 + 0.2, 0.25, 4);
+ink(flat, 'M2290 1250 V720 M2250 1250 H2330', B0 + 0.2, 0.3, 5); // лампа — в спальне, где герой соберёт тепло: в финале она загорается рядом с ним
+clay(flat, 'M2220 720 L2360 720 L2330 600 L2250 600 Z', B0 + 0.3, SAND, 3, 2, {quiet: true}); ink(flat, 'M2220 720 L2360 720 L2330 600 L2250 600 Z', B0 + 0.3, 0.25, 5);
+ink(flat, 'M2290 1240 C2260 1252 2230 1250 2222 1230 C2218 1210 2220 1195 2220 1180', B0 + 0.3, 0.25, 4); clay(flat, R(2196, 1140, 48, 40, 9), B0 + 0.3, '#FBF6EA', 2, 2, {quiet: true}); ink(flat, R(2196, 1140, 48, 40, 9) + O(2220, 1160, 7), B0 + 0.3, 0.2, 4);
+const lampSwitch = el('path', {d: 'M2266 1240 l14 -16', stroke: CLAY, 'stroke-width': 8, 'stroke-linecap': 'round'}, flat.top);
+ink(flat, R(2246, 1228, 40, 24, 7), B0 + 0.4, 0.15, 3.5);
+// ── спальня
+drawRoomShell(2160, B0); wallAt(3240, B0 + 0.1);
+clay(flat, R(2620, 420, 300, 320, 6), B0, NIGHT, 0, 0, {quiet: true}); ink(flat, R(2620, 420, 300, 320, 6) + 'M2770 420 V740 M2620 580 H2920', B0, 0.35, 5);
+clay(flat, R(2380, 1070, 560, 180, 16), B0 + 0.1, '#E9DCC6', 6, 5, {quiet: true}); ink(flat, R(2380, 1070, 560, 180, 16) + 'M2380 1070 V960 C2380 940 2400 930 2420 930 H2440 V1070', B0 + 0.1, 0.4, 6);
+ink(flat, R(2990, 1100, 150, 20, 6) + 'M3010 1120 V1250 M3120 1120 V1250', B0 + 0.2, 0.3, 4.5);
+const doorLeaf = el('path', {d: 'M2160 760 V1250', stroke: INK, 'stroke-width': 7, 'stroke-linejoin': 'round', fill: '#C9A27E'}, flat.top);
+// ── ванная
+drawRoomShell(3240, W0);
+for (let i = 0; i < 7; i++) ink(flat, `M3260 ${560 + i * 70} H4300`, W0 + 0.1 + i * 0.02, 0.15, 2, {color: '#14141360'});
+for (let i = 0; i < 15; i++) ink(flat, `M${3260 + i * 70} 560 V1000`, W0 + 0.12 + i * 0.012, 0.12, 2, {color: '#14141360'});
+clay(flat, 'M3420 1050 H4000 V1180 C4000 1230 3970 1250 3930 1250 H3490 C3450 1250 3420 1230 3420 1180 Z', W0 + 0.1, '#F4F0E8', 6, 5, {quiet: true});
+ink(flat, 'M3400 1050 H4020 M3420 1050 V1180 C3420 1230 3450 1250 3490 1250 H3930 C3970 1250 4000 1230 4000 1180 V1050', W0 + 0.1, 0.4, 6);
+ink(flat, 'M3900 760 V840 C3900 870 3880 880 3850 880 H3800 V910 M3870 800 H3930', W0 + 0.2, 0.3, 6);
+const bottles = [4080, 4140, 4200].map((x, i) => { ink(flat, R(x, 1120, 44, 130, 12) + `M${x + 12} 1120 V1096 H${x + 32} V1120`, W0 + 0.3 + i * 0.05, 0.2, 3.5); return el('path', {fill: SKY, filter: 'url(#clayTex)', opacity: 0.85}, flat.clay); });
+
+// ══ Темнота и свет ═════════════════════════════════════════════════════
+const darkMask = el('mask', {id: 'darkMask', maskUnits: 'userSpaceOnUse', x: -200, y: 0, width: 4800, height: 1600}, E.defs);
+el('rect', {x: -200, y: 0, width: 4800, height: 1600, fill: '#fff'}, darkMask);
+const lg = el('radialGradient', {id: 'lightG'}, E.defs);
+el('stop', {offset: 0, 'stop-color': '#000'}, lg); el('stop', {offset: 0.55, 'stop-color': '#444'}, lg); el('stop', {offset: 1, 'stop-color': '#fff'}, lg);
+const warm = el('radialGradient', {id: 'warmG'}, E.defs);
+el('stop', {offset: 0, 'stop-color': '#FFC772', 'stop-opacity': 0.55}, warm); el('stop', {offset: 1, 'stop-color': '#FFC772', 'stop-opacity': 0}, warm);
+const dark = el('rect', {x: -200, y: CE, width: 4800, height: FL - CE + 60, fill: '#1A2440', mask: 'url(#darkMask)'}, E.topLayer);
+const glowL = el('g', {}, E.topLayer);
+const notesTop = el('g', {}, E.topLayer);
+const lights = [];
+const light = (x, y, r, onF, o = {}) => {
+  const hole = el('ellipse', {cx: x, cy: y, rx: r, ry: r, fill: 'url(#lightG)'}, darkMask);
+  const glow = o.glow ? el('ellipse', {cx: x, cy: y, rx: r * 0.7, ry: r * 0.7, fill: 'url(#warmG)'}, glowL) : null;
+  lights.push({hole, glow, x, y, r, on: onF, o});
+};
+const POWER = W('s08', 'свет') + 0.05; // свет дали: лампа вспыхивает, темнота уходит
+on((t) => {
+  const power = EASE.io2(prog(t, POWER, POWER + 1.4));
+  dark.style.opacity = 0.7 * clamp(prog(t, t2 - 0.6, t2)) * (1 - power);
+  lights.forEach((L) => {
+    const k = Math.max(0, L.on(t)), fl = L.o.flicker ? 1 + Math.sin(Math.floor(t * 12) * 1.9 + L.x) * 0.05 : 1, rr = L.r * k * fl;
+    L.hole.setAttribute('rx', rr.toFixed(1)); L.hole.setAttribute('ry', rr.toFixed(1));
+    if (L.o.follow) { const [x, y] = L.o.follow(t); L.hole.setAttribute('cx', x); L.hole.setAttribute('cy', y); if (L.glow) { L.glow.setAttribute('cx', x); L.glow.setAttribute('cy', y); } }
+    if (L.glow) { L.glow.setAttribute('rx', (rr * 0.7).toFixed(1)); L.glow.setAttribute('ry', (rr * 0.7).toFixed(1)); L.glow.style.opacity = Math.min(1, k) * (L.o.keep ? 1 : 1 - power); }
+  });
+});
+const win = (a, b) => (t) => EASE.io2(prog(t, a, a + 0.3)) * (1 - EASE.io2(prog(t, b - 0.3, b)));
+
+// ══ Герой — «ты»: позы на слова озвучки, между шагами — склейка через часы ══
+const people = el('g', {}, flat.top);
+const you = F.person(people, {h: 520, top: CLAY, sweaterColor: OLIVE, hair: 'short', style: 'line', seed: 1});
+const at = (P, dx, dy) => (t) => { const m = P.g.getAttribute('transform') || 'translate(0 0)'; const [, x, y] = /translate\(([-\d.]+) ([-\d.]+)\)/.exec(m) || [0, 0, 0]; return [+x + dx, +y + dy]; };
+const SIT_HUG = {lean: 6, sh: [-40, -50], el: [-80, -80], hp: [-85, -80], kn: [85, 80], drop: 0.24};
+const KNEEL = 'kneel', REACHL = {lean: 25, sh: [-20, -50], el: [-10, -20], hp: [-30, 10], kn: [40, 20], drop: 0.06};
+const PULL = {lean: -8, sh: [20, 30], el: [-60, -40], hp: [-80, 20], kn: [100, 90], drop: 0.2};
+// опорные моменты — слова диктора
+const wNab = W('s03', 'Набери'), wBut = W('s03', 'бутылки'), wNas = W('s03', 'Насосы'), wNap = W('s03', 'напор');
+const wVyd = W('s04', 'Выдерни'), wSka = W('s04', 'качком'), wOdn = W('s04', 'Одну'), wOst = W('s04', 'оставь'), wDal = W('s04', 'дали');
+const wHol = W('s05', 'холодильнике'), wChe = W('s05', 'четыре'), wMor = W('s05', 'Морозилка'), wKon = W('s05', 'Консервы');
+const wPro = W('s06', 'прохладнее'), wGaz = W('s06', 'Газовую'), wNe = W('s06', 'включай'), wUg = W('s06', 'газ'), wSon = W('s06', 'сне');
+const wZak = W('s07', 'Закрой'), wShch = W('s07', 'щель'), wOkno = W('s07', 'окно'), wSvi = W('s07', 'святера', 'свитера'), wChai = W('s07', 'горячий');
+const wSvet = W('s08', 'свет'), wLuch = W('s08', 'лучше');
+const POWER2 = wSvet + 0.05;
+you.keys([
+  [0, {x: 1650, y: FL, pose: 'stand', look: 1, fade: 0}], [t2 + 0.4, {x: 1650, y: FL, pose: 'stand', look: 1, fade: 1}], [t3 - 0.05, {x: 1650, y: FL, pose: 'stand', look: 1}],
+  // шаг 1 — вода
+  [t3, {x: 4080, y: FL, pose: 'stand', look: -1}], [wNab, {x: 4080, y: FL, pose: 'reach', look: -1}], [wBut - 0.1, {x: 4080, y: FL, pose: 'reach', look: -1}], [wBut + 0.25, {x: 4040, y: FL, pose: KNEEL, look: 1}], [t4 - 0.05, {x: 4040, y: FL, pose: KNEEL, look: 1}],
+  // шаг 2 — розетки, лампа
+  [t4, {x: 1880, y: FL, pose: KNEEL, look: 1}], [wVyd + 0.25, {x: 1880, y: FL, pose: KNEEL, look: 1}], [wVyd + 0.55, {x: 1880, y: FL, pose: PULL, look: 1}], [wVyd + 1.2, {x: 1880, y: FL, pose: 'stand', look: 1}], [wVyd + 1.8, {x: 1880, y: FL, pose: 'stand', look: 1}], [wOst - 0.4, {x: 2180, y: FL, pose: 'stand', look: 1}], [wOst - 0.05, {x: 2180, y: FL, pose: KNEEL, look: 1}], [wOst + 0.7, {x: 2180, y: FL, pose: KNEEL, look: 1}], [wOst + 1.1, {x: 2180, y: FL, pose: 'stand', look: 1}], [t5 - 0.05, {x: 2180, y: FL, pose: 'stand', look: 1}],
+  // шаг 3 — еда
+  [t5, {x: 420, y: FL, pose: 'stand', look: -1}], [wHol - 0.2, {x: 420, y: FL, pose: 'reach', look: -1}], [wHol + 0.6, {x: 420, y: FL, pose: 'carry', look: 1}], [wHol + 1.2, {x: 450, y: FL, pose: 'carry', look: 1}], [wHol + 1.7, {x: 450, y: FL - 10, pose: 'sit', look: 1, mouth: 1}], [t6 - 0.05, {x: 450, y: FL - 10, pose: 'sit', look: 1}],
+  // шаг 4 — плита
+  [t6, {x: 780, y: FL, pose: 'stand', look: 1, breath: 1}], [wGaz - 0.1, {x: 780, y: FL, pose: 'stand', look: 1, breath: 1}], [wGaz + 0.4, {x: 780, y: FL, pose: 'reach', look: 1, breath: 1}], [wNe - 0.1, {x: 780, y: FL, pose: 'reach', look: 1, breath: 1}], [wNe + 0.3, {x: 720, y: FL, pose: 'stop', look: 1, breath: 1}], [wSon, {x: 720, y: FL, pose: 'stop', look: 1, breath: 1}], [wSon + 0.4, {x: 720, y: FL, pose: 'stand', look: 1, breath: 1}], [t7 - 0.05, {x: 720, y: FL, pose: 'stand', look: 1, breath: 1}],
+  // шаг 5 — тепло в одной комнате
+  [t7, {x: 2240, y: FL, pose: 'stand', look: -1, breath: 1}], [wZak, {x: 2240, y: FL, pose: 'reach', look: -1, breath: 1}], [wZak + 0.7, {x: 2240, y: FL, pose: 'stand', look: -1, breath: 1}], [wShch - 0.1, {x: 2260, y: FL, pose: KNEEL, look: -1, breath: 1}], [wShch + 0.9, {x: 2260, y: FL, pose: KNEEL, look: -1}], [wShch + 1.15, {x: 2260, y: FL, pose: 'stand', look: 1}],
+  [wOkno + 0.25, {x: 2640, y: FL, pose: 'stand', look: 1, breath: 1}], [wOkno + 0.55, {x: 2640, y: FL, pose: 'armsUp', look: 1, breath: 1}], [wSvi - 0.3, {x: 2640, y: FL, pose: 'armsUp', look: 1, sweater: 0}], [wSvi + 0.1, {x: 2640, y: FL, pose: 'armsUp', look: 1, sweater: 1}], [wSvi + 0.4, {sweater: 1, x: 2640, y: FL, pose: 'stand', look: -1}], [wChai - 0.5, {sweater: 1, x: 2500, y: FL, pose: 'stand', look: -1}], [wChai - 0.15, {sweater: 1, x: 2480, y: FL - 65, pose: SIT_HUG, look: 1, breath: 0.4}], [wLuch, {sweater: 1, x: 2480, y: FL - 65, pose: SIT_HUG, look: 1, mouth: 1}],
+  [wLuch + 0.7, {sweater: 1, x: 2440, y: FL, pose: 'stand', look: -1, mouth: 1}], [DUR, {sweater: 1, x: 2440, y: FL, pose: 'stand', look: -1, mouth: 1}],
+]);
+const mug = el('g', {}, flat.top);
+el('path', {d: 'M-22 -30 H22 V12 C22 26 -22 26 -22 12 Z', fill: CLAY, stroke: INK, 'stroke-width': 4, filter: 'url(#clayTex)'}, mug);
+el('path', {d: 'M22 -20 C40 -20 40 4 22 4', fill: 'none', stroke: INK, 'stroke-width': 4}, mug);
+const steam = [0, 1].map(() => el('path', {fill: 'none', stroke: INK, 'stroke-width': 3, 'stroke-linecap': 'round', opacity: 0.6}, mug));
+on((t) => { const vis = t > wChai - 0.1 && t < DUR; mug.style.display = vis ? '' : 'none'; if (!vis) return; const [mx, my] = at(you, 70, -250)(t); mug.setAttribute('transform', `translate(${mx} ${my}) scale(${EASE.back(clamp(prog(t, wChai - 0.1, wChai + 0.2))).toFixed(3)})`); const tt = Math.floor(t * 12) / 12; steam.forEach((p, k) => { let d = ''; for (let j = 0; j <= 6; j++) d += (j ? 'L' : 'M') + (-8 + k * 16 + Math.sin(j * 0.9 + tt * 5 + k) * 5).toFixed(1) + ' ' + (-36 - j * 10 - (tt * 30) % 10).toFixed(1); p.setAttribute('d', d); }); });
+sfx(wChai, 'file:foley/mug.wav', {gain: 1});
+
+// ══ Шаг 1: вода — течёт на «Набери», напор пропадает на «напор может пропасть» ══
+const stream = el('path', {fill: SKY, filter: 'url(#clayTex)'}, flat.top), tubW = el('path', {fill: SKY, filter: 'url(#clayTex)', opacity: 0.8}, flat.clay);
+on((t) => {
+  const thin = 1 - EASE.io2(prog(t, wNap + 0.4, wNap + 1.0)), onW = t > wNab + 0.15 && t < wNap + 1.1, lv = lerp(1240, 1100, EASE.io2(prog(t, wNab + 0.2, wNap + 0.6))), tt = Math.floor(t * 12) / 12, hw = 9 * thin + 1;
+  let d = 'M3792 910'; for (let k = 0; k <= 8; k++) d += `L${(3801 - hw + Math.sin(k + tt * 9) * 3 * thin).toFixed(1)} ${(910 + k * (lv - 910) / 8).toFixed(1)}`;
+  for (let k = 8; k >= 0; k--) d += `L${(3801 + hw + Math.sin(k + tt * 9 + 1) * 3 * thin).toFixed(1)} ${(910 + k * (lv - 910) / 8).toFixed(1)}`;
+  stream.setAttribute('d', d + 'Z'); stream.style.display = onW ? '' : 'none';
+  tubW.setAttribute('d', `M3428 ${lv} H3992 V1180 C3992 1226 3966 1244 3930 1244 H3490 C3454 1244 3428 1226 3428 1180 Z`); tubW.style.display = t > wNab + 0.2 ? '' : 'none';
+  bottles.forEach((b, i) => { const x = [4080, 4140, 4200][i], f = EASE.io2(prog(t, wBut + 0.2 + i * 0.35, wBut + 0.6 + i * 0.35)); b.setAttribute('d', R(x + 4, 1246 - 120 * f, 36, 120 * f, 8)); b.style.display = f > 0 ? '' : 'none'; });
+});
+const drips = [0, 1, 2].map(() => el('ellipse', {rx: 5, ry: 8, fill: SKY, stroke: INK, 'stroke-width': 2.5}, flat.top));
+on((t) => drips.forEach((dp, i) => { const ph = ((t - wNap - 1.0 - i * 0.45) % 1.35) / 1.35, vis = t > wNap + 1.0 + i * 0.45 && t < t4; dp.style.display = vis ? '' : 'none'; dp.setAttribute('cx', 3801); dp.setAttribute('cy', (915 + ph * 170).toFixed(1)); }));
+sfx(wNab + 0.1, 'file:foley/water_tap.wav', {gain: 1});
+
+// ══ Шаг 2: вилка вылетает на «Выдерни», искра на «скачком», щелчок на «оставь» ══
+const plug = el('g', {}, flat.top); el('path', {d: R(-16, -18, 32, 36, 6), fill: '#3E4A5E', stroke: INK, 'stroke-width': 3}, plug);
+const cord = el('path', {fill: 'none', stroke: INK, 'stroke-width': 5, 'stroke-linecap': 'round'}, flat.top);
+on((t) => { const q = EASE.back(clamp(prog(t, wVyd + 0.3, wVyd + 0.65))), px = 1912 - q * 90, py = 1155 + q * 60, sw = Math.sin((t - wVyd - 0.6) * 9) * 18 * Math.exp(-Math.max(0, t - wVyd - 0.6) * 2.5) * (t > wVyd + 0.6 ? 1 : 0);
+  plug.setAttribute('transform', `translate(${px} ${py}) rotate(${-q * 50})`); cord.setAttribute('d', `M${px} ${py + 18} C${px - 30 + sw} ${py + 80} 1800 ${1220 + sw} 1760 1150`); [plug, cord].forEach((n) => (n.style.display = t > L0 ? '' : 'none')); });
+sfx(wVyd + 0.35, 'file:foley/plug_pull.wav', {gain: 1});
+ink(flat, 'M1925 1140 L1960 1100 L1945 1098 L1985 1050', wSka, 0.2, 10, {color: CLAY, taper: [0.05, 0.2], until: wSka + 1.2});
+[[-1, -1], [1, -1], [1, 0.3]].forEach(([dx, dy], i) => ink(flat, `M1925 1155 L${1925 + dx * 46} ${1155 + dy * 40}`, wSka + 0.05 + i * 0.02, 0.1, 5, {color: CLAY2, until: wSka + 1.2}));
+
+on((t) => { lampSwitch.style.display = t > B0 + 0.4 ? '' : 'none'; lampSwitch.setAttribute('transform', `rotate(${(EASE.back(clamp(prog(t, wOst + 0.1, wOst + 0.4))) * -70).toFixed(1)} 2266 1240)`); });
+sfx(wOst + 0.15, 'file:foley/switch_click.wav', {gain: 1});
+
+// ══ Шаг 3: холодильник на «холодильнике», сроки на «четыре» и «Морозилка» ══
+// дверца открывается на зрителя: петли слева, свободный край уходит к петлям и чуть растёт в перспективе; внутри — полки
+const fin = el('g', {}, flat.top);
+el('path', {d: R(122, 832, 206, 406, 12), fill: '#FFF6DE', stroke: INK, 'stroke-width': 5}, fin);
+el('path', {d: 'M126 960 H324 M126 1090 H324', stroke: INK, 'stroke-width': 4}, fin);
+// продукты узнаются по силуэту: пакет молока, сыр с дырками, банка огурцов, колбаса, яйца, яблоко
+const FD = (d, fill, w = 3.5) => el('path', {d, fill, stroke: INK, 'stroke-width': w, 'stroke-linejoin': 'round'}, fin);
+FD('M150 958 V892 L162 878 H182 L194 892 V958 Z', '#FBF6EA'); FD('M150 892 H194 M162 878 L166 892', 'none', 3); FD(R(156, 912, 32, 22, 4), SKY, 2.5);
+FD('M226 956 H306 V926 Z', SAND); FD(O(272, 946, 5) + O(292, 940, 4) + O(256, 950, 3.5), '#E0B44E', 2.5);
+FD(R(148, 1032, 46, 56, 9), '#CFE0C0'); FD(R(144, 1022, 54, 12, 4), OLIVE); FD(O(162, 1056, 7, 12) + O(178, 1066, 7, 12), OLIVE, 2.5);
+FD('M214 1088 C210 1070 218 1064 230 1064 H296 C308 1064 314 1072 310 1088 Z', CLAY2); FD('M236 1064 V1088 M258 1064 V1088 M280 1064 V1088', 'none', 2);
+[160, 188, 216].forEach((x) => FD(O(x, 1220, 12, 15), '#FBF6EA', 3)); FD(R(146, 1226, 84, 10, 3), '#D8CDB8', 3);
+FD(O(282, 1214, 20), CLAY); FD('M282 1194 C284 1186 288 1182 294 1180 M282 1194 C278 1186 272 1184 268 1186', 'none', 3);
+const fdoor = el('path', {fill: '#ECE3D1', stroke: INK, 'stroke-width': 6, filter: 'url(#clayTex)'}, flat.top);
+on((t) => { const o = EASE.io2(prog(t, wHol - 0.1, wHol + 0.2)) * (1 - EASE.io2(prog(t, wHol + 0.7, wHol + 1.0))), x2 = 110 + 230 * Math.cos(o * 1.3), e = 34 * Math.sin(o * 1.3); fin.style.display = fdoor.style.display = o > 0.02 ? '' : 'none'; fdoor.setAttribute('d', `M110 820 L${x2.toFixed(1)} ${(820 - e).toFixed(1)} L${x2.toFixed(1)} ${(1250 + e).toFixed(1)} L110 1250 Z`); });
+const food = el('g', {}, flat.top);
+// тарелка: сыр с дырками, колбаса с кружками срезов, яблоко
+const FP = (d, fill, w = 4) => el('path', {d, fill, stroke: INK, 'stroke-width': w, 'stroke-linejoin': 'round'}, food);
+FP(O(0, 14, 66, 11), PAPER); FP('M-56 10 H-8 V-24 Z', SAND); FP(O(-20, 2, 4.5) + O(-14, -10, 3.5), '#E0B44E', 2.5);
+FP('M0 10 C-4 -2 2 -10 12 -10 H44 C54 -10 58 -2 54 10 Z', CLAY2); FP('M18 -10 V10 M32 -10 V10', 'none', 2.5);
+FP(O(46, -14, 13), CLAY); FP('M46 -27 C47 -32 50 -34 54 -35', 'none', 3);
+on((t) => { food.style.display = t > wHol + 0.4 && t < t6 + 1 ? '' : 'none'; const [x, y] = at(you, 40, -300)(t); food.setAttribute('transform', t < wHol + 1.6 ? `translate(${x} ${y})` : `translate(640 990)`); });
+sfx(wHol - 0.1, 'file:foley/fridge_open.wav', {gain: 1}); sfx(wHol + 0.8, 'file:foley/fridge_close.wav', {gain: 1});
+clay(flat, R(124, 836, 202, 400, 14), wChe - 0.4, SKY, 0, 0, {op: 0.32, quiet: true, out: t6});
+clay(flat, R(124, 654, 202, 156, 14), wMor - 0.1, SKY2, 0, 0, {op: 0.45, quiet: true, out: t6});
+note(flat, 130, 600, '≈ 4 часа', wChe, {size: 70, until: wMor + 0.3, parent: notesTop});
+note(flat, 360, 690, '← ≈ 2 суток', wMor + 0.4, {size: 60, until: wKon - 0.3, parent: notesTop});
+note(flat, 700, 520, 'консервы — потом', wKon, {size: 52, until: t6, parent: notesTop});
+
+
+// ══ Шаг 4: пар изо рта на «прохладнее», стоп на «не включай», газ на «газ» ══
+const coE = ['M910 900 C880 840 940 800 880 740 C840 700 880 660 830 640', 'M1010 900 C1040 830 980 790 1010 730 C1040 670 960 620 880 610'].map((d) => el('path', {d, fill: 'none', stroke: INK, 'stroke-width': 4.5, 'stroke-linecap': 'round', 'stroke-dasharray': '1 15'}, flat.top));
+on((t) => coE.forEach((p, i) => { p.style.strokeDashoffset = (-t * 70 - i * 9).toFixed(1); p.style.opacity = 0.7 * EASE.io2(prog(t, wUg + i * 0.15, wUg + 0.5 + i * 0.15)) * (1 - EASE.io2(prog(t, t7 - 0.5, t7 - 0.1))); }));
+note(flat, 300, 490, 'CO: без цвета и запаха', wUg, {size: 54, dur: 0.9, until: t7, parent: notesTop}); ink(flat, 'M960 820 C1060 820 1110 900 1110 1000 C1110 1110 1040 1200 960 1200 C860 1200 800 1110 800 1000 C800 900 860 820 972 822', wNe - 0.05, 0.4, 18, {color: CLAY, ease: 'io', taper: [0.04, 0.1], until: t7});
+ink(flat, 'M850 880 L1080 1150', wNe + 0.3, 0.18, 18, {color: CLAY, taper: [0.05, 0.2], until: t7});
+
+note(flat, 470, 760, 'zzz…', wSon, {size: 56, card: false, color: PAPER, until: t7, parent: notesTop});
+// иней на окнах — на «прохладнее»
+[[470, 430], [1250, 430], [2620, 420]].forEach(([x, y], i) => ink(flat, `M${x + 6} ${y + 290} C${x + 30} ${y + 250} ${x + 50} ${y + 270} ${x + 66} ${y + 236} C${x + 76} ${y + 216} ${x + 92} ${y + 226} ${x + 96} ${y + 204} M${x + 294} ${y + 290} C${x + 270} ${y + 254} ${x + 250} ${y + 270} ${x + 236} ${y + 238} M${x + 6} ${y + 8} C${x + 30} ${y + 30} ${x + 44} ${y + 14} ${x + 62} ${y + 40}`, wPro + i * 0.1, 0.7, 3, {color: PAPER}));
+
+// ══ Шаг 5: дверь на «Закрой», полотенце на «щель», шторы на «окно», плед на «свитера» ══
+on((t) => { const q = EASE.back(clamp(prog(t, wZak + 0.2, wZak + 0.7))), a = (1 - q) * 1.4, ex = 2160 + Math.sin(a) * 280; doorLeaf.style.display = t > B0 ? '' : 'none'; doorLeaf.setAttribute('d', q >= 1 || t < t7 ? 'M2160 760 V1250' : `M2160 760 V1250 M2160 760 L${ex.toFixed(1)} ${(760 + 30 * (1 - q)).toFixed(1)} V${(1250 - 10 * (1 - q)).toFixed(1)} L2160 1250`); });
+sfx(wZak + 0.55, 'file:foley/door_close.wav', {gain: 1});
+const wisps = [0, 1, 2].map(() => el('path', {fill: 'none', stroke: SKY2, 'stroke-width': 5, 'stroke-linecap': 'round', opacity: 0}, flat.top));
+on((t) => wisps.forEach((p, k) => { const tt = Math.floor(t * 12) / 12; let d = ''; for (let j = 0; j <= 6; j++) d += (j ? 'L' : 'M') + (2170 + j * 18 + (tt * 50) % 18).toFixed(1) + ' ' + (1230 - k * 9 + Math.sin(j + tt * 8 + k) * 4).toFixed(1); p.setAttribute('d', d); p.style.opacity = 0.9 * clamp(prog(t, wZak + 0.7, wZak + 1.0)) * (1 - clamp(prog(t, wShch + 0.9, wShch + 1.2))); }));
+const towel = el('g', {}, flat.top);
+el('path', {d: R(-70, -16, 140, 32, 16), fill: OLIVE, filter: 'url(#clayTex)', stroke: INK, 'stroke-width': 4}, towel);
+el('path', {d: 'M-40 -16 V16 M0 -16 V16 M40 -16 V16', stroke: PAPER, 'stroke-width': 4}, towel);
+on((t) => { const q = EASE.back(clamp(prog(t, wShch + 0.4, wShch + 0.9))); towel.style.display = t > wShch + 0.3 ? '' : 'none'; towel.setAttribute('transform', `translate(${lerp(2340, 2240, q).toFixed(1)} 1234) rotate(${((1 - q) * 160).toFixed(1)})`); });
+sfx(wShch + 0.4, 'file:foley/cloth.wav', {gain: 1});
+const curtain = el('path', {fill: OLIVE, filter: 'url(#clayTex)', stroke: INK, 'stroke-width': 5}, flat.top);
+on((t) => { const q = EASE.o(prog(t, wOkno + 0.4, wOkno + 1.1)), h = 340 * q; curtain.style.display = q > 0 ? '' : 'none'; curtain.setAttribute('d', `M2600 410 H2940 V${410 + h} C2880 ${428 + h} 2820 ${402 + h} 2770 ${420 + h} C2700 ${432 + h} 2650 ${410 + h} 2600 ${424 + h} Z M2660 410 V${410 + h} M2770 410 V${410 + h} M2880 410 V${410 + h}`); });
+sfx(wOkno + 0.5, 'file:foley/curtain.wav', {gain: 1});
+ink(flat, R(3050, 1050, 18, 50, 4), wOkno + 1.0, 0.15, 3.5);
+clay(flat, 'M3059 1046 C3050 1032 3056 1022 3059 1010 C3064 1022 3070 1032 3059 1046 Z', wOkno + 1.1, CLAY, 3, 2, {flick: 9});
+
+// ══ Свет в темноте ════════════════════════════════════════════════════
+light(0, 0, 240, win(t2 + 0.3, wOkno + 1.3), {follow: at(you, 60, -290), glow: true});
+light(3060, 1040, 320, (t) => EASE.io2(prog(t, wOkno + 1.1, wOkno + 1.5)), {glow: true, flicker: true});
+light(2290, 680, 420, (t) => EASE.back(clamp(prog(t, POWER2 - 0.1, POWER2 + 0.3))), {glow: true, keep: true});
+sfx(POWER2, 'file:foley/fridge_hum.wav', {gain: 1}); // свет дали — оживает холодильник
+
+// ══ Пометки вступления и шагов ════════════════════════════════════════
+note(flat, 120, 470, 'на час?', W('s02', 'час,', 'час'), {size: 70, until: t3, parent: notesTop});
+note(flat, 2650, 470, 'на пару суток?', W('s02', 'пару'), {size: 70, until: t3, parent: notesTop});
+note(flat, 3520, 520, 'насосы — от сети', wNas, {size: 56, until: wNap, parent: notesTop});
+note(flat, 1560, 640, 'скачок не страшен', wSka + 0.3, {size: 52, until: wOdn, parent: notesTop});
+note(flat, 2190, 520, 'вкл. — ждём свет', wDal - 0.4, {size: 56, until: t5, parent: notesTop});
+note(flat, 2200, 530, 'свет дали!', POWER2 + 0.3, {size: 84, parent: notesTop});
+
+// ══ Часы — нить ролика; между шагами циферблат накрывает кадр и уносит в новую комнату ══
+const CK = ui('clock'), IRIS = ui('iris');
+const STEPS = [[t3, 1], [t4, 5], [t5, 60], [t6, 180], [t7, 360]];
+const CLOCK_IN = W('s02', 'вариант.', 'вариант');
+const minutesAt = (t) => { let m = 0; STEPS.forEach(([ts, v], i) => { const prev = i ? STEPS[i - 1][1] : 0; if (t >= ts - 0.3) m = lerp(prev, v, EASE.io2(prog(t, ts - 0.3, ts + 0.35))); }); return m; };
+STEPS.forEach(([ts]) => { sfx(ts - 0.2, 'file:foley/clock_tick.wav', {gain: 1}); });
+on((t) => {
+  const show = EASE.o(prog(t, CLOCK_IN - 0.2, CLOCK_IN + 0.2)) * (1 - EASE.io2(prog(t, POWER2, POWER2 + 0.6)));
+  let cover = 0;
+  STEPS.forEach(([ts]) => { cover = Math.max(cover, EASE.io2(prog(t, ts - 0.4, ts - 0.05)) * (1 - EASE.io2(prog(t, ts + 0.12, ts + 0.5)))); });
+  const cy = lerp(384, 900, cover), sc = lerp(1, 3.4, cover);
+  CK.style.opacity = show; CK.style.display = show > 0.01 ? '' : 'none';
+  CK.setAttribute('transform', `translate(540 ${cy}) scale(${sc.toFixed(3)}) translate(-540 -384)`);
+  ui('ckT').style.opacity = 1 - Math.min(1, cover * 3); IRIS.setAttribute('cy', cy); IRIS.setAttribute('r', (66 + cover * 1300).toFixed(1)); IRIS.style.display = cover > 0.001 ? '' : 'none';
+  const m = minutesAt(t);
+  ui('ckM').setAttribute('transform', `rotate(${(m * 6).toFixed(1)} 540 384)`); ui('ckH').setAttribute('transform', `rotate(${(m * 0.5).toFixed(1)} 540 384)`);
+  const mm = Math.round(m); ui('ckT').textContent = mm < 1 ? 'свет погас' : mm < 60 ? `прошло ${mm} мин` : `прошло ${Math.round(mm / 60)} ч`;
+});
+
+// ══ Анонс во вступлении: пять шагов значками на «пять спокойных шагов» ══
+const icons = ui('icons'), iconT = W('s02', '5', 'пять');
+[...icons.children].forEach((g, i) => {
+  on((t) => { const q = EASE.back(clamp(prog(t, iconT + i * 0.18, iconT + i * 0.18 + 0.32))), out = EASE.io2(prog(t, CLOCK_IN - 0.3 + i * 0.04, CLOCK_IN + 0.1 + i * 0.04));
+    const x = +g.dataset.x, y = 1190, tx = lerp(x, 540, out), ty = lerp(y, 384, out), s = q * (1 - out * 0.8);
+    g.style.display = q > 0.001 && out < 0.999 ? '' : 'none'; g.setAttribute('transform', `translate(${tx.toFixed(1)} ${ty.toFixed(1)}) scale(${s.toFixed(3)})`); });
+});
+
+// ══ A. Дом гаснет (s01) ═══════════════════════════════════════════════
+{
+  const sc = K.place(-2800, 0, t2 + 0.05);
+  clay(sc, R(110, 320, 860, 930, 18), 0, NIGHT, 0, 0, {quiet: true});
+  clay(sc, O(830, 430, 44), 0.05, PAPER, 0, 0, {quiet: true});
+  note(sc, 150, 470, '−20°', 0.4, {size: 96, color: PAPER, card: false, until: 2.6});
+  const snow = el('g', {}, sc.top);
+  for (let i = 0; i < 40; i++) el('circle', {cx: 130 + ((i * 113) % 820), cy: 340 + ((i * 71) % 900), r: 2.5 + (i % 3), fill: PAPER, opacity: 0.85}, snow);
+  on((t) => [...snow.children].forEach((c, i) => c.setAttribute('transform', `translate(${Math.sin(t + i) * 6} ${((t * 45 + i * 13) % 90) - 45})`)));
+  ink(sc, 'M300 1250 V440 H780 V1250', 0.0, 0.6, 8);
+  ink(sc, 'M280 440 H800 M470 1250 V1170 H610 V1250 M450 1170 H630', 0.4, 0.3, 5);
+  const off0 = W('s01', 'свет');
+  for (let r = 0; r < 9; r++) for (let c = 0; c < 5; c++) {
+    const x = 330 + c * 92, y = 470 + r * 78, d = R(x, y, 56, 50, 4), me = r === 6 && c === 2, off = me ? off0 + 1.3 : off0 - 0.1 + r * 0.1 + c * 0.02;
+    clay(sc, d, 0.1 + (r * 5 + c) * 0.006, SAND, 0, 0, {quiet: true, out: off});
+    ink(sc, d, 0.15 + (r * 5 + c) * 0.006, 0.18, 3);
+  }
+  ink(sc, 'M80 1250 H1000', 0.3, 0.4, 4);
+  
+  cam(0.0, 540, -2800 + 860, 1.0);
+  cam(off0, 540, -2800 + 880, 1.06);
+  cam(t2 - 0.05, 542, -2800 + 1000, 2.6, {ease: 'i'});
+}
+
+// ══ Монтаж: в каждом шаге общий → действие → крупно → назад; склейки на смене шага — под часами ══
+const cut = (ts, x, y, s) => { cam(ts - 0.06, ...lastCam); cam(ts, x, y, s); lastCam = [x, y, s]; };
+let lastCam = [2160, 860, 0.5];
+cam(t2, 1500, 860, 0.55);
+cam(W('s02', 'пару'), 2200, 860, 0.56);
+cam(t3 - 0.06, 2300, 860, 0.58); lastCam = [2300, 860, 0.58];
+// шаг 1 — вода
+cut(t3, 3900, 900, 1.2);
+cam(wNab + 0.3, 3860, 960, 1.35);
+cam(wNas, 3880, 900, 1.15);
+cam(t4 - 0.06, 3870, 940, 1.3); lastCam = [3870, 940, 1.3];
+// шаг 2 — розетки и лампа
+cut(t4, 1860, 940, 1.2);
+cam(wVyd + 0.3, 1880, 1000, 1.38);
+cam(wSka + 0.5, 1900, 960, 1.2);
+cam(wOst, 2130, 900, 1.15);
+cam(t5 - 0.06, 2140, 880, 1.2); lastCam = [2140, 880, 1.2];
+// шаг 3 — еда
+cut(t5, 460, 880, 1.15);
+cam(wChe - 0.5, 360, 840, 1.3);
+cam(wMor + 1.3, 580, 900, 1.25);
+cam(wKon - 0.1, 760, 760, 1.3);
+cam(t6 - 0.06, 760, 770, 1.3); lastCam = [760, 770, 1.3];
+// шаг 4 — плита
+cut(t6, 780, 860, 1.2);
+cam(wNe, 820, 900, 1.35);
+cam(wUg, 680, 800, 1.2);
+cam(t7 - 0.06, 680, 810, 1.25); lastCam = [680, 810, 1.25];
+// шаг 5 — тепло
+cut(t7, 2300, 920, 1.2);
+cam(wShch, 2300, 1000, 1.35);
+cam(wOkno + 0.2, 2680, 760, 1.2);
+cam(wChai - 0.3, 2560, 900, 1.38);
+cam(t8 + 0.1, 2550, 900, 1.35);
+cam(POWER2 - 0.35, 2400, 860, 1.05, {ease: 'io'});
+cam(wLuch, 2410, 870, 0.95);
+cam(t9, 2420, 860, 0.8);
+cam(DUR, 2420, 860, 0.66);
+
+E.cams.sort((a, b) => a.t - b.t);
+// без фоновой музыки и нарастаний: тишина, голос и мягкие звуки действий
+E.start();
+</script>
+</body></html>

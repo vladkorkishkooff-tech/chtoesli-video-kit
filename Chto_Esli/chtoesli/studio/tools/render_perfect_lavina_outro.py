@@ -1,0 +1,255 @@
+import os
+from playwright.sync_api import sync_playwright
+
+clean_bg_path = r'D:\Chanels\Chto_Esli\chtoesli\review\orig_bg_pristine_v4.jpg'.replace(os.sep, '/')
+curt_tex = r'D:\Chanels\Chto_Esli\chtoesli\studio\tex\curtain.png'.replace(os.sep, '/')
+plaque_tex = r'D:\Chanels\Chto_Esli\chtoesli\studio\tex\plaque_logo.png'.replace(os.sep, '/')
+
+html_content = f"""<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Лавина — Финал</title>
+<style>
+  html, body {{ margin: 0; padding: 0; width: 1080px; height: 1920px; overflow: hidden; background: #F4F2EB; }}
+  svg {{ position: absolute; inset: 0; width: 1080px; height: 1920px; }}
+</style>
+<script src="D:/Chanels/Chto_Esli/chtoesli/studio/lib/geom2.js"></script>
+<script src="D:/Chanels/Chto_Esli/chtoesli/studio/lib/sosed2.js"></script>
+</head>
+<body>
+<svg id="svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <defs id="defs">
+    <!-- Frame clipping boundary: matches inner frame border exactly -->
+    <clipPath id="frameClip"><rect x="55" y="231" width="969" height="1200"/></clipPath>
+    
+    <!-- Curtain textures -->
+    <pattern id="curtTexL" width="512" height="512" patternUnits="userSpaceOnUse"><image href="file:///{curt_tex}" width="512" height="512"/></pattern>
+    <pattern id="curtTexR" width="512" height="512" patternUnits="userSpaceOnUse"><image href="file:///{curt_tex}" width="512" height="512"/></pattern>
+    <pattern id="curtTexP" width="512" height="512" patternUnits="userSpaceOnUse" patternTransform="translate(130 60)"><image href="file:///{curt_tex}" width="512" height="512"/></pattern>
+    <linearGradient id="curtShL"><stop offset="0" stop-color="#8E4A2C" stop-opacity="0"/><stop offset=".62" stop-color="#8E4A2C" stop-opacity=".2"/><stop offset="1" stop-color="#8E4A2C" stop-opacity=".46"/></linearGradient>
+    <linearGradient id="curtShR"><stop offset="0" stop-color="#8E4A2C" stop-opacity=".46"/><stop offset=".38" stop-color="#8E4A2C" stop-opacity=".2"/><stop offset="1" stop-color="#8E4A2C" stop-opacity="0"/></linearGradient>
+    <linearGradient id="curtHi"><stop offset="0" stop-color="#FCF5EB" stop-opacity="0"/><stop offset=".5" stop-color="#FCF5EB" stop-opacity=".2"/><stop offset="1" stop-color="#FCF5EB" stop-opacity="0"/></linearGradient>
+  </defs>
+
+  <!-- 1. Background: Pristine original room with mountains, wall, lamp, torn paper border -->
+  <image href="file:///{clean_bg_path}" x="0" y="0" width="1080" height="1920"/>
+
+  <!-- 2. Clean Sofa Vector -->
+  <g id="sofa" stroke="#211C1A" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Backrest base -->
+    <path d="M 305 812 Q 305 808 322 808 H 756 Q 774 808 774 812 V 1010 H 305 Z" fill="#5A7584" stroke-width="3.2"/>
+    
+    <!-- Left Backrest Cushion -->
+    <path d="M 314 818 Q 314 816 326 816 H 526 Q 532 816 532 824 V 998 Q 532 1004 526 1004 H 326 Q 314 1004 314 996 Z" fill="#6B8897" stroke-width="2.6"/>
+    <path d="M 330 828 H 518 V 992 H 330 Z" fill="none" stroke="#526E7C" stroke-width="1.4" opacity="0.4"/>
+
+    <!-- Right Backrest Cushion -->
+    <path d="M 546 818 Q 546 816 552 816 H 752 Q 764 816 764 818 V 996 Q 764 1004 752 1004 H 552 Q 546 1004 546 998 Z" fill="#6B8897" stroke-width="2.6"/>
+    <path d="M 560 828 H 748 V 992 H 560 Z" fill="none" stroke="#526E7C" stroke-width="1.4" opacity="0.4"/>
+
+    <!-- Left Armrest: x=186..305, y=915..1205 -->
+    <path d="M 230 918 Q 186 918 186 960 V 1195 Q 186 1205 200 1205 H 295 Q 305 1205 305 1195 V 960 Q 305 918 260 918 Z" fill="#5F7D8C" stroke-width="3.2"/>
+    <path d="M 205 930 Q 246 925 286 930 V 1190 H 205 Z" fill="none" stroke="#506976" stroke-width="1.6" opacity="0.5"/>
+
+    <!-- Right Armrest: x=773..892, y=915..1205 -->
+    <path d="M 818 918 Q 773 918 773 960 V 1195 Q 773 1205 783 1205 H 878 Q 892 1205 892 1195 V 960 Q 892 918 848 918 Z" fill="#5F7D8C" stroke-width="3.2"/>
+    <path d="M 793 930 Q 833 925 873 930 V 1190 H 793 Z" fill="none" stroke="#506976" stroke-width="1.6" opacity="0.5"/>
+
+    <!-- Front apron -->
+    <rect x="220" y="1170" width="638" height="35" rx="4" fill="#536E7B" stroke-width="3.0"/>
+    
+    <!-- Wooden legs -->
+    <rect x="255" y="1205" width="22" height="20" rx="3" fill="#3B2A1E" stroke-width="2.6"/>
+    <rect x="801" y="1205" width="22" height="20" rx="3" fill="#3B2A1E" stroke-width="2.6"/>
+
+    <!-- Left Seat Cushion: x=305..536, y=1006..1172 -->
+    <path d="M 307 1010 Q 307 1006 315 1006 H 528 Q 536 1006 536 1012 V 1166 Q 536 1172 528 1172 H 315 Q 307 1172 307 1166 Z" fill="#718E9E" stroke-width="3.0"/>
+    
+    <!-- Right Seat Cushion: x=542..773, y=1006..1172 -->
+    <path d="M 542 1012 Q 542 1006 550 1006 H 763 Q 771 1006 771 1010 V 1166 Q 771 1172 763 1172 H 550 Q 542 1172 542 1166 Z" fill="#718E9E" stroke-width="3.0"/>
+    
+    <!-- Highlights & shadows -->
+    <line x1="315" y1="1012" x2="528" y2="1012" stroke="#8CAAB9" stroke-width="2.5" opacity="0.7"/>
+    <line x1="550" y1="1012" x2="763" y2="1012" stroke="#8CAAB9" stroke-width="2.5" opacity="0.7"/>
+    <line x1="315" y1="1166" x2="528" y2="1166" stroke="#48616E" stroke-width="2.5" opacity="0.6"/>
+    <line x1="550" y1="1166" x2="763" y2="1166" stroke="#48616E" stroke-width="2.5" opacity="0.6"/>
+  </g>
+
+  <!-- 3. Canonical Cat peacefully curled on Right Cushion -->
+  <image href="file:///D:/Chanels/Chto_Esli/Klubok_project/09_game/art/cat/alert.png" x="575" y="990" width="195" height="135"/>
+
+  <!-- 4. Hero Seated Squarely on Left Cushion -->
+  <g id="heroG"></g>
+
+  <!-- 5. Curtains & Plaque (clipped within frame boundary) -->
+  <g id="curt" clip-path="url(#frameClip)"></g>
+
+  <!-- 6. Outer Frame Line overlay -->
+  <rect x="55" y="231" width="969" height="1200" fill="none" stroke="#211C1A" stroke-width="3.2"/>
+</svg>
+
+<script>
+  const {{mk}} = GEOM2, S2 = SOSED2();
+  const heroG = document.getElementById('heroG');
+  const defs = document.getElementById('defs');
+  
+  // Hero seated squarely on left cushion:
+  const hero = S2.side(heroG, {{s: 0.58, lw: 3.2, off: 2.5, defs: defs}});
+  hero.set({{
+    x: 410,
+    y: 1215,
+    lean: -2,
+    legF: {{hp: -86, kn: 86, toe: 0}},
+    legN: {{hp: -83, kn: 83, toe: 0}},
+    armN: {{sh: -34, el: -96}},
+    armF: {{sh: -18, el: -62}},
+    handN: 'grip',
+    handF: 'flat',
+    face: {{mouth: 'smile', eye: 'calm', look: [0.6, 0.2]}}
+  }});
+
+  // Steaming mug
+  const mw = hero.wrist('N');
+  const mugG = mk('g', {{transform: `translate(${{mw[0] + 16}} ${{mw[1] + 20}}) scale(0.50)`}}, heroG);
+  mk('path', {{d: 'M40 -70q42 0 42 34t-42 34', fill: 'none', stroke: '#211C1A', 'stroke-width': 13}}, mugG);
+  mk('path', {{d: 'M-46 -96H46V-8Q46 4 34 4H-34Q-46 4 -46 -8Z', fill: '#D06A33', stroke: '#211C1A', 'stroke-width': 6}}, mugG);
+  mk('ellipse', {{cx: 0, cy: -96, rx: 46, ry: 10, fill: '#6E3B22', stroke: '#211C1A', 'stroke-width': 5}}, mugG);
+  
+  const st = mk('path', {{fill: 'none', stroke: '#F4EFE6', 'stroke-width': 5, 'stroke-linecap': 'round', opacity: 0.75}}, mugG);
+
+  // ══ Curtains & Plaque Animation ══
+  const G = document.getElementById('curt');
+  // Timings: curtains begin closing at t = 2.3s, fully closed at t = 3.8s, plaque drops at t = 3.75s
+  const PT0 = 2.0, PT1 = 2.5, CT0 = 2.3, CT1 = 3.8;
+  const XC = 540, TOP = 231, BOT = 1431, NP = 6, NY = 20;
+  const INK = '#141413', CLAY2 = '#B4553A';
+  const F1 = (v) => (+v).toFixed(1);
+  const R_rect = (x, y, w, h, r = 0) => r ? `M${{x + r}} ${{y}}H${{x + w - r}}Q${{x + w}} ${{y}} ${{x + w}} ${{y + r}}V${{y + h - r}}Q${{x + w}} ${{y + h}} ${{x + w - r}} ${{y + h}}H${{x + r}}Q${{x}} ${{y + h}} ${{x}} ${{y + h - r}}V${{y + r}}Q${{x}} ${{y}} ${{x + r}} ${{y}}Z` : `M${{x}} ${{y}}H${{x + w}}V${{y + h}}H${{x}}Z`;
+  const hs = (a, b) => {{ const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return (x - Math.floor(x)) * 2 - 1; }};
+
+  function el(tag, attrs = {{}}, parent = null) {{
+    const n = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+    if (parent) parent.appendChild(n);
+    return n;
+  }}
+  const P_path = (par, w, op = 1) => el('path', {{fill: 'none', stroke: INK, 'stroke-width': w, opacity: op, 'stroke-linecap': 'round', 'stroke-linejoin': 'round'}}, par);
+  const PL = (pts) => 'M' + pts.map((q) => F1(q[0]) + ' ' + F1(q[1])).join('L');
+  const YS = [...Array(NY + 1)].map((_, j) => TOP + ((BOT - TOP) * j) / NY);
+
+  const prog = (t, a, b) => Math.max(0, Math.min(1, (t - a) / (b - a)));
+  const EASE = {{
+    io2: (u) => u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2,
+    back: (u) => {{ const c = 1.70158; return (c + 1) * Math.pow(u - 1, 3) + c * Math.pow(u - 1, 2) + 1; }}
+  }};
+
+  const halves = [-1, 1].map((s) => {{
+    const g = el('g', {{}}, G), id = s < 0 ? 'L' : 'R';
+    return {{s, g, dir: -s, xs: s < 0 ? 55 : 1024, xc: XC - s * 6, pat: document.getElementById('curtTex' + id), base: el('path', {{fill: `url(#curtTex${{id}})`}}, g),
+      sh: [...Array(NP)].map(() => el('path', {{fill: `url(#curtSh${{id}})`}}, g)), hi: [...Array(NP)].map(() => el('path', {{fill: 'url(#curtHi)'}}, g)),
+      hat: P_path(g, 1.7, 0.75), fold: P_path(g, 2.4), fold2: P_path(g, 1.3, 0.5), edge: P_path(g, 3.6), edge2: P_path(g, 1.6, 0.6)}};
+  }});
+
+  // Wooden channel plaque
+  const svgDefs = document.querySelector('#svg defs');
+  const QW = 720, QH = 332, QX = XC - QW / 2, QY = 668, QT0 = CT1 - 0.05, QA = [XC - 250, XC + 250];
+  el('feGaussianBlur', {{stdDeviation: 9}}, el('filter', {{id: 'plqSh', x: '-10%', y: '-20%', width: '120%', height: '140%'}}, svgDefs));
+  el('path', {{d: R_rect(QX, QY, QW, QH, 10)}}, el('clipPath', {{id: 'plqClip'}}, svgDefs));
+  const qg = el('g', {{}}, G), qs = el('g', {{}}, qg);
+  el('path', {{d: R_rect(QX + 8, QY + 14, QW, QH, 10), fill: '#4A2414', opacity: 0.32, filter: 'url(#plqSh)'}}, qs);
+  el('image', {{href: 'file:///{plaque_tex}', x: QX, y: QY, width: QW, height: QH, preserveAspectRatio: 'xMidYMid slice', 'clip-path': 'url(#plqClip)'}}, qs);
+  const qInk = P_path(qs, 3), qInk2 = P_path(qs, 1.4, 0.55), qCord = P_path(qg, 2.4), qr = el('g', {{}}, qg);
+  QA.forEach((x) => el('circle', {{cx: x, cy: QY + 24, r: 7, fill: 'none', stroke: INK, 'stroke-width': 2.4}}, qr));
+  const spring = (d) => {{ const z = 0.75, w = 8, wd = w * Math.sqrt(1 - z * z); return Math.exp(-z * w * d) * (Math.cos(wd * d) + (z * w / wd) * Math.sin(wd * d)); }};
+
+  // Lambrequin at top
+  const pg = el('g', {{}}, G), J = [55, 245, 435, 645, 835, 1024], YB = 352, DP = 80;
+  let pd = `M55 200V${{YB}}H55`; for (let i = 0; i < 5; i++) pd += `Q${{J[i] + 95}} ${{YB + DP}} ${{J[i + 1]}} ${{YB}}`; pd += 'H1024V200Z';
+  el('path', {{d: pd, fill: 'url(#curtTexP)'}}, pg); el('path', {{d: pd, fill: CLAY2, opacity: 0.42}}, pg);
+  const pFold = P_path(pg, 2.0, 0.85), pHat = P_path(pg, 1.6, 0.75), pInk = P_path(pg, 3.4), pInk2 = P_path(pg, 1.6, 0.6);
+  const tas = J.slice(1, 5).map((x) => {{
+    const tg = el('g', {{}}, pg);
+    el('path', {{d: `M${{x}} ${{YB}}V${{YB + 20}}`, fill: 'none', stroke: INK, 'stroke-width': 2.2}}, tg);
+    el('path', {{d: `M${{x}} ${{YB + 18}}C${{x - 11}} ${{YB + 26}} ${{x - 11}} ${{YB + 46}} ${{x}} ${{YB + 52}}C${{x + 11}} ${{YB + 46}} ${{x + 11}} ${{YB + 26}} ${{x}} ${{YB + 18}}Z`, fill: CLAY2, stroke: INK, 'stroke-width': 2.2}}, tg);
+    el('path', {{d: `M${{x - 6}} ${{YB + 50}}L${{x - 7}} ${{YB + 62}}M${{x}} ${{YB + 52}}V${{YB + 64}}M${{x + 6}} ${{YB + 50}}L${{x + 7}} ${{YB + 62}}`, fill: 'none', stroke: INK, 'stroke-width': 1.8, 'stroke-linecap': 'round'}}, tg);
+    return {{tg, x}};
+  }});
+
+  function renderFrame(t) {{
+    // Steam animation
+    const ph = t * 2.5;
+    st.setAttribute('d', `M-10 -115Q${{(-18 + Math.sin(ph)*8).toFixed(1)}} -140 ${{(-8 + Math.sin(ph+1)*5).toFixed(1)}} -165T-10 -215 M12 -115Q${{(22 + Math.sin(ph+2)*8).toFixed(1)}} -140 ${{(12 + Math.sin(ph+3)*5).toFixed(1)}} -165T14 -215`);
+
+    // Curtains visibility
+    const vis = t >= PT0;
+    G.style.display = vis ? '' : 'none';
+    if (!vis) return;
+
+    const fs = Math.floor(t * 12), u = prog(t, CT0, CT1), e = EASE.io2(u);
+    const lag = t < CT1 ? 34 * Math.sin(Math.PI * u) : -14 * Math.exp(-(t - CT1) * 4.2) * Math.sin((t - CT1) * 12.5);
+
+    halves.forEach((H) => {{
+      H.g.style.display = t >= CT0 ? '' : 'none';
+      if (t < CT0) return;
+      const xe = H.xs + (H.xc - H.xs) * e, sp = Math.abs(xe - H.xs) / NP, wa = Math.min(1, sp / 60);
+      const X = (q, y, k) => H.xs + (xe - H.xs) * q - H.dir * lag * q * Math.pow((y - TOP) / (BOT - TOP), 1.4) + wa * (3 + 4 * q) * Math.sin(y * 0.0042 + q * 9 + H.s) + 0.7 * hs(fs, k * 53 + y * 0.01);
+      const line = (q, k, dx = 0) => YS.map((y) => [X(q, y, k) + dx, y]);
+      const strip = (qa, qb, k) => PL([...line(qa, k + 20), ...line(qb, k).reverse()]) + 'Z';
+      H.pat.setAttribute('patternTransform', `translate(${{F1(xe - H.xc)}} 0)`);
+      H.base.setAttribute('d', PL([[H.xs - H.dir * 40, TOP], ...line(1, NP), [H.xs - H.dir * 40, BOT]]) + 'Z');
+      let fd = '', f2 = '', hd = '';
+      const hl = Math.min(15, sp * 0.42);
+      for (let k = 1; k <= NP; k++) {{
+        const q = k / NP;
+        H.sh[k - 1].setAttribute('d', strip(q - 0.42 / NP, q, k));
+        H.hi[k - 1].setAttribute('d', strip(q - 0.86 / NP, q - 0.56 / NP, k + 60));
+        if (k < NP) {{ fd += PL(line(q, k)); if (k % 2) f2 += PL(line(q, k + 40, 2.2 * H.dir)); }}
+        for (let j = 0, y = TOP + 150 + (k % 2) * 11; y < BOT - 10; j++, y += 23) if (hs(k, j) > -0.3) {{
+          const xk = X(q, y, k); hd += `M${{F1(xk - H.dir * (hl + 4))}} ${{F1(y + 8 + 0.6 * hs(fs, k * 7 + j))}}L${{F1(xk - H.dir * 4)}} ${{F1(y - 7)}}`;
+        }}
+      }}
+      H.fold.setAttribute('d', fd); H.fold2.setAttribute('d', f2); H.hat.setAttribute('d', hd);
+      H.edge.setAttribute('d', PL(line(1, NP))); H.edge2.setAttribute('d', PL(line(1, NP + 30, -2.6 * H.dir)));
+    }});
+
+    qg.style.display = t >= QT0 ? '' : 'none';
+    if (t >= QT0) {{
+      const d = t - QT0, dy = -780 * spring(d), dx = 9 * Math.exp(-d * 1.8) * Math.sin(d * 6.5), tr = `translate(${{F1(dx)}} ${{F1(dy)}})`, jq = (k) => 0.7 * hs(fs, 300 + k);
+      qs.setAttribute('transform', tr); qr.setAttribute('transform', tr);
+      qCord.setAttribute('d', QA.map((x, i) => `M${{x}} 200L${{F1(x + dx / 2 + jq(i))}} ${{F1((200 + QY + 17 + dy) / 2)}}L${{F1(x + dx)}} ${{F1(QY + 17 + dy)}}`).join(''));
+      qInk.setAttribute('d', R_rect(QX + jq(2), QY + jq(3), QW + jq(4), QH + jq(5), 10));
+      qInk2.setAttribute('d', R_rect(QX + 4 + jq(6), QY + 3 + jq(7), QW - 7 + jq(8), QH - 5 + jq(9), 9));
+    }}
+
+    const pu = prog(t, PT0, PT1);
+    pg.setAttribute('transform', `translate(0 ${{F1(-190 * (1 - EASE.back(pu)))}})`);
+  }}
+
+  window.__seek = (t) => {{ renderFrame(t); return 0; }};
+</script>
+</body>
+</html>
+"""
+
+html_file = r'D:\Chanels\Chto_Esli\chtoesli\studio\ep_lavina_master_outro.html'
+with open(html_file, 'w', encoding='utf-8') as f:
+    f.write(html_content)
+
+print(f"Saved master HTML: {html_file}")
+
+# Test render 3 keyframes
+test_times = [1.0, 3.2, 4.4]
+with sync_playwright() as p:
+    browser = p.chromium.launch(executable_path=r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe')
+    page = browser.new_page(viewport={'width': 1080, 'height': 1920})
+    page.goto(f'file:///{html_file.replace(os.sep, "/")}')
+    page.wait_for_timeout(1000)
+    
+    for t in test_times:
+        page.evaluate(f'window.__seek({t})')
+        out_jpg = fr'D:\Chanels\Chto_Esli\chtoesli\review\master_outro_t{t:.1f}.jpg'
+        page.screenshot(path=out_jpg, type='jpeg', quality=95)
+        print(f"Rendered: {out_jpg}")
+        
+    browser.close()

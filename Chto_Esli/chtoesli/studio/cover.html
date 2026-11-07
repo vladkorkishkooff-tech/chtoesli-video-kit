@@ -1,0 +1,110 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>Обложка — тушь и глина</title>
+<style>
+  @font-face { font-family: 'Hand'; src: url('fonts/Caveat.ttf'); font-weight: 400 700; }
+  html, body { margin: 0; overflow: hidden; background: #F4F2EB; }
+  svg { display: block; }
+</style>
+<script src="lib/folk.js"></script>
+</head><body>
+<svg id="svg" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="paperPat" width="512" height="512" patternUnits="userSpaceOnUse"><rect width="512" height="512" fill="#F4F2EB"/><rect width="512" height="512" filter="url(#fibre)"/></pattern>
+    <filter id="fibre" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9 .3" numOctaves="3" seed="6"/><feColorMatrix values="0 0 0 0 .42  0 0 0 0 .37  0 0 0 0 .3  0 0 0 .2 0"/></filter>
+    <filter id="inkRough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="2"/></filter>
+    <filter id="clayTex" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="11" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="5" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="9" result="n"/><feColorMatrix in="n" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .32 0" result="g"/>
+      <feComposite in="g" in2="d" operator="in" result="gi"/><feBlend in="d" in2="gi" mode="multiply"/>
+    </filter>
+    <radialGradient id="warm"><stop offset="0" stop-color="#FFC772" stop-opacity=".85"/><stop offset="1" stop-color="#FFC772" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g id="root"></g>
+</svg>
+<script>
+// Обложки канала 03 — одна сцена «тушь и глина», разные кадрирования: ?fmt=short (1080×1920) | wide (1280×720) | avatar (800×800) | banner (2560×1440)
+const fmt = (/[?&]fmt=(\w+)/.exec(location.search) || [0, 'short'])[1];
+const SIZE = {short: [1080, 1920], wide: [1280, 720], avatar: [800, 800], banner: [2560, 1440]}[fmt];
+const [W, H] = SIZE, NS = 'http://www.w3.org/2000/svg', INK = '#141413', CLAY = '#D97757', CLAY2 = '#B4553A', NIGHT = '#26345A', SKY = '#6A9BCC', SAND = '#E9C46A', OLIVE = '#788C5D', PAPER = '#F4F2EB';
+const svg = document.getElementById('svg'); svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+const root = document.getElementById('root');
+const el = (tag, a, p = root) => { const n = document.createElementNS(NS, tag); for (const k in a) n.setAttribute(k, a[k]); if (a.text) n.textContent = a.text; p.appendChild(n); return n; };
+const ink = (d, w = 6, p = root) => el('path', {d, fill: 'none', stroke: INK, 'stroke-width': w, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', filter: 'url(#inkRough)'}, p);
+const clay = (d, c, dx = 9, dy = 7, p = root) => el('path', {d, fill: c, filter: 'url(#clayTex)', transform: `translate(${dx} ${dy})`}, p);
+const R = (x, y, w, h, r = 0) => `M${x + r} ${y}H${x + w - r}Q${x + w} ${y} ${x + w} ${y + r}V${y + h - r}Q${x + w} ${y + h} ${x + w - r} ${y + h}H${x + r}Q${x} ${y + h} ${x} ${y + h - r}V${y + r}Q${x} ${y} ${x + r} ${y}Z`;
+el('rect', {width: W, height: H, fill: 'url(#paperPat)'});
+
+/** Сцена «тёмная комната»: окно с инеем, луна, герой с фонариком, часы. Рисуется в своей системе 1000×1000. */
+function room(g, withClock = true) {
+  clay(R(0, 0, 1000, 1000, 40), NIGHT, 0, 0, g);
+  ink(R(0, 0, 1000, 1000, 40), 9, g);
+  clay(R(560, 110, 320, 360, 8), '#3E5486', 0, 0, g); ink(R(560, 110, 320, 360, 8) + 'M720 110 V470 M560 290 H880', 7, g);
+  el('circle', {cx: 800, cy: 190, r: 34, fill: PAPER}, g);
+  ink('M570 460 C590 420 610 440 626 410 C636 392 652 400 656 380 M870 460 C846 426 828 440 816 412 M570 120 C594 140 604 126 622 150', 4, g).setAttribute('stroke', PAPER);
+  ink('M0 840 H1000', 6, g);
+  ink('M120 840 V430 M80 840 H160', 6, g); clay('M60 430 L180 430 L155 330 L85 330 Z', '#8E7A4E', 6, 5, g); ink('M60 430 L180 430 L155 330 L85 330 Z', 6, g);
+  el('ellipse', {cx: 470, cy: 520, rx: 300, ry: 300, fill: 'url(#warm)'}, g);
+  // луч фонарика
+  el('path', {d: 'M598 448 L965 330 L990 620 Z', fill: '#FFD98A', opacity: 0.6, filter: 'url(#clayTex)'}, g);
+  const F = FOLK({on: () => {}});
+  const hero = F.person(g, {h: 560, top: CLAY, hair: 'short', style: 'line', seed: 1});
+  hero.keys([[0, {x: 430, y: 840, pose: {lean: 4, sh: [8, -80], el: [6, -10], hp: [3, -3], kn: [0, 0]}, look: 1, breath: 1, mouth: 1}]]);
+  hero.draw(0.6);
+  if (withClock) {
+    const c = el('g', {transform: 'translate(150 160)'}, g);
+    el('circle', {r: 92, fill: PAPER, stroke: INK, 'stroke-width': 9}, c);
+    for (let i = 0; i < 12; i++) el('path', {d: 'M0 -80 V-66', stroke: INK, 'stroke-width': 6, 'stroke-linecap': 'round', transform: `rotate(${i * 30})`}, c);
+    el('path', {d: 'M0 0 V-46', stroke: INK, 'stroke-width': 11, 'stroke-linecap': 'round', transform: 'rotate(180)'}, c);
+    el('path', {d: 'M0 0 V-66', stroke: CLAY, 'stroke-width': 8, 'stroke-linecap': 'round'}, c);
+    el('circle', {r: 9, fill: INK}, c);
+  }
+}
+const title = (x, y, s, anchor = 'middle') => {
+  el('text', {x, y, 'font-family': 'Georgia', 'font-size': 64 * s, 'letter-spacing': 10 * s, fill: OLIVE, 'text-anchor': anchor, text: 'ЧТО ЕСЛИ'});
+  el('text', {x, y: y + 150 * s, 'font-family': 'Georgia', 'font-weight': 700, 'font-size': 132 * s, fill: INK, 'text-anchor': anchor, text: 'ОТКЛЮЧАТ'});
+  el('text', {x, y: y + 290 * s, 'font-family': 'Georgia', 'font-weight': 700, 'font-size': 132 * s, fill: INK, 'text-anchor': anchor, text: 'СВЕТ'});
+  const mx = anchor === 'middle' ? x - 290 * s : x - 20 * s;
+  el('path', {d: R(mx, y + 345 * s, 590 * s, 105 * s, 40 * s), fill: CLAY, opacity: 0.7, filter: 'url(#clayTex)'}); // маркер под словом, не поверх
+  el('text', {x, y: y + 435 * s, 'font-family': 'Georgia', 'font-weight': 700, 'font-style': 'italic', 'font-size': 150 * s, fill: INK, 'text-anchor': anchor, text: 'зимой?'});
+};
+const hand = (x, y, txt, s, rot = -4) => el('text', {x, y, 'font-family': 'Hand', 'font-weight': 700, 'font-size': 70 * s, fill: INK, transform: `rotate(${rot} ${x} ${y})`, text: txt});
+
+if (fmt === 'short') {
+  title(540, 200, 1);
+  const g = el('g', {transform: 'translate(40 700) scale(1.0)'}); room(g);
+  hand(300, 1810, '5 спокойных шагов', 1, -3);
+} else if (fmt === 'wide') {
+  title(50, 140, 0.66, 'start');
+  const g = el('g', {transform: 'translate(650 40) scale(0.64)'}); room(g);
+} else if (fmt === 'avatar') {
+  // аватар канала: герой «Что если» крупно + глиняный вопрос — подходит к любой теме
+  el('circle', {cx: 400, cy: 400, r: 400, fill: CLAY, filter: 'url(#clayTex)'});
+  el('circle', {cx: 400, cy: 400, r: 372, fill: PAPER});
+  const g = el('g', {transform: 'translate(330 1235) scale(1.55)'});
+  const F = FOLK({on: () => {}});
+  const me = F.person(g, {h: 640, top: CLAY, hair: 'short', style: 'line', seed: 2});
+  me.keys([[0, {x: 0, y: 0, pose: {lean: 0, sh: [8, -8], el: [6, -6], hp: [3, -3], kn: [0, 0], headTilt: -6}, look: 1, mouth: 1}]]); me.draw(0.3);
+  el('text', {x: 610, y: 400, 'font-family': 'Georgia', 'font-weight': 700, 'font-size': 330, fill: CLAY, stroke: INK, 'stroke-width': 9, 'paint-order': 'stroke', 'text-anchor': 'middle', transform: 'rotate(10 610 400)', text: '?'});
+} else if (fmt === 'banner') {
+  // шапка канала: вся важная часть — строго в безопасной зоне 1546×423 по центру (507..2053, 508..931)
+  // строгий минимализм «тушь и глина», никаких иконок стихий, никаких градиентов
+  const bg = el('g', {transform: 'translate(0 26)'});
+  // 1. «Что если» — классическая антиква
+  el('text', {x: 898, y: 715, 'font-family': 'Playfair Display, Georgia, serif', 'font-weight': 700, 'font-size': 156, fill: INK, 'letter-spacing': 2, filter: 'url(#inkRough)', text: 'Что если'}, bg);
+  // 2. Знак «?» кистью в цвете глины #D97757
+  const qg = el('g', {transform: 'translate(1612 636) rotate(7.5)'}, bg);
+  el('path', {d: 'M -23 -38 C -23 -58, -7 -77, 21 -77 C 53 -77, 75 -54, 75 -26 C 75 -2, 59 18, 39 34 C 23 47, 17 58, 16 73 L -4 73 C -4 55, 4 41, 21 26 C 37 12, 47 -2, 47 -22 C 47 -38, 35 -52, 19 -52 C -1 -52, -14 -42, -19 -34 Z', fill: CLAY, filter: 'url(#clayTex)'}, qg);
+  // 3. Изюминка: точка у «?» — человек, нарисованный одной линией тушью
+  const hg = el('g', {transform: 'translate(1619 718)', filter: 'url(#inkRough)'}, bg);
+  el('circle', {cx: 0, cy: -28, r: 4.3, fill: INK}, hg);
+  el('path', {d: 'M -3.8 0 C -3.8 -7, -4.5 -13, -2.8 -18 C -4.8 -20, -5.2 -22.5, -3.2 -24 C -1.5 -25, 1.5 -25, 3.2 -24 C 5.2 -22.5, 4.8 -20, 2.8 -18 C 4.5 -13, 3.8 -7, 3.8 0 Z', fill: INK}, hg);
+  el('path', {d: 'M 0 -8 L 0 0', stroke: PAPER, 'stroke-width': 1.2, 'stroke-linecap': 'round'}, hg);
+  // 4. Тонкая неровная линия тушью
+  ink('M 865 756 C 1020 754.7, 1170 756.2, 1280 755.5 C 1390 754.8, 1540 756.3, 1695 755.2', 2.3, bg);
+  // 5. Подпись «КАК ВЫЖИТЬ В ЧС» с широкой разрядкой
+  el('text', {x: 1280, y: 826, 'font-family': 'Montserrat, sans-serif', 'font-weight': 600, 'font-size': 32, 'letter-spacing': 15, fill: INK, 'text-anchor': 'middle', filter: 'url(#inkRough)', text: 'КАК ВЫЖИТЬ В ЧС'}, bg);
+}
+window.__ready = document.fonts.ready;
+</script>
+</body></html>

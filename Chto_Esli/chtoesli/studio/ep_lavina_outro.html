@@ -1,0 +1,231 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>Лавина — финал</title>
+<style>
+  @font-face { font-family: 'Hand'; src: url('fonts/Caveat.ttf'); font-weight: 400 700; }
+  :root { --ink: #141413; --clay: #D97757; --paper: #F4F2EB; --serif: Georgia, serif; }
+  html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: var(--paper); }
+  #stage { position: absolute; inset: 0; }
+  svg { position: absolute; inset: 0; }
+</style>
+<script src="camlife.js"></script>
+<script src="sfx.js"></script>
+<script src="lib/geom2.js"></script>
+<script src="lib/look2.js"></script>
+<script src="lib/yard2.js"></script>
+<script src="lib/sosed2.js"></script>
+<script src="lib/cat2.js"></script>
+</head><body>
+<div id="stage">
+<svg id="svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <defs>
+    <!-- Текстура бумаги -->
+    <pattern id="paperPat" width="512" height="512" patternUnits="userSpaceOnUse"><rect width="512" height="512" fill="#F4F2EB"/></pattern>
+    <filter id="clayTex" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="11" result="w"/>
+      <feDisplacementMap in="SourceGraphic" in2="w" scale="4" result="d"/>
+    </filter>
+
+    <!-- Текстуры для штор -->
+    <clipPath id="frameClip"><rect x="55" y="231" width="969" height="1200"/></clipPath>
+    <pattern id="curtTexL" width="512" height="512" patternUnits="userSpaceOnUse"><image href="tex/curtain.png" width="512" height="512"/></pattern>
+    <pattern id="curtTexR" width="512" height="512" patternUnits="userSpaceOnUse"><image href="tex/curtain.png" width="512" height="512"/></pattern>
+    <pattern id="curtTexP" width="512" height="512" patternUnits="userSpaceOnUse" patternTransform="translate(130 60)"><image href="tex/curtain.png" width="512" height="512"/></pattern>
+    <linearGradient id="curtShL"><stop offset="0" stop-color="#8E4A2C" stop-opacity="0"/><stop offset=".62" stop-color="#8E4A2C" stop-opacity=".2"/><stop offset="1" stop-color="#8E4A2C" stop-opacity=".46"/></linearGradient>
+    <linearGradient id="curtShR"><stop offset="0" stop-color="#8E4A2C" stop-opacity=".46"/><stop offset=".38" stop-color="#8E4A2C" stop-opacity=".2"/><stop offset="1" stop-color="#8E4A2C" stop-opacity="0"/></linearGradient>
+    <linearGradient id="curtHi"><stop offset="0" stop-color="#FCF5EB" stop-opacity="0"/><stop offset=".5" stop-color="#FCF5EB" stop-opacity=".2"/><stop offset="1" stop-color="#FCF5EB" stop-opacity="0"/></linearGradient>
+  </defs>
+
+  <!-- 1. Фоновая бумага -->
+  <rect width="1080" height="1920" fill="#F4F2EB"/>
+
+  <!-- 2. Внутренняя рамка комнаты: x=55..1024 (w=969), y=231..1431 (h=1200) -->
+  <svg x="55" y="231" width="969" height="1200" viewBox="0 0 1080 1335" preserveAspectRatio="none">
+    <defs id="roomDefs"></defs>
+    <g id="roomWorld"></g>
+  </svg>
+
+  <!-- 3. Шторы финала поверх комнаты (в границах кадра) -->
+  <g id="curt" clip-path="url(#frameClip)"></g>
+
+  <!-- 4. Рамка картины (тушь, двойная линия) -->
+  <rect x="55" y="231" width="969" height="1200" fill="none" stroke="#211c1a" stroke-width="3.2"/>
+  <rect x="52" y="228" width="975" height="1206" fill="none" stroke="#211c1a" stroke-width="1.2" opacity="0.4"/>
+
+  <!-- 5. Экранный UI: верхняя шапка и нижняя подпись -->
+  <g font-family="Georgia" fill="#141413">
+    <text x="90" y="152" font-size="78" font-weight="700">Что если</text>
+    <text x="472" y="152" font-size="96" font-weight="700" fill="#C26A4A">?</text>
+    <text x="134" y="202" font-size="28" letter-spacing="7" fill="#2B2836">ЗНАЙ, ЧТО ДЕЛАТЬ</text>
+    <text x="990" y="202" font-size="44" font-style="italic" text-anchor="end" fill="#141413">15 минут</text>
+    <path d="M90 232 H990" stroke="#141413" stroke-width="2.6" fill="none"/>
+  </g>
+
+  <g font-family="Georgia" fill="#141413" text-anchor="middle">
+    <text x="540" y="1505" font-size="52" font-weight="700">Сохрани —</text>
+    <path d="M180 1572 Q540 1560 900 1572" stroke="#D97757" stroke-width="38" stroke-linecap="round" fill="none" opacity="0.65" filter="url(#clayTex)"/>
+    <text x="540" y="1582" font-size="74" font-weight="700" font-style="italic">и пусть не пригодится</text>
+  </g>
+</svg>
+<div id="vig" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 80% 66% at 50% 47%, rgba(0,0,0,0) 65%, rgba(11,8,24,.35) 100%)"></div>
+</div>
+
+<script>
+const DUR = 4.667;
+const {mk} = GEOM2, L2 = LOOK2, Y = YARD2, S2 = SOSED2();
+const D = document.getElementById('roomDefs'), W = document.getElementById('roomWorld');
+
+// Рисуем комнату
+const rm = Y.room(W, D, {lw: 2.8});
+
+// Ковёр на полу
+const rug = mk('g', {}, W);
+Y.P(rug, 'M150 1336L930 1336L1030 1776L50 1776Z', '#76565E', '#211c1a', 2.6);
+Y.P(rug, 'M186 1362L894 1362L980 1748L100 1748Z', null, '#B48A84', 5, {opacity: 0.55});
+
+// Канонический спящий кот на правом сиденье дивана
+mk('image', {
+  href: 'cat_rgba.png',
+  x: 560,
+  y: 1005,
+  width: 310,
+  height: 124
+}, W);
+
+// Герой сидит на левом сиденье дивана (на подушке, попа на y=1112, ноги на полу)
+const hero = S2.side(W, {s: 0.52, lw: 3.2, off: 2});
+hero.set({
+  x: 330,
+  y: 1390,
+  lean: -4,
+  legF: {hp: -85, kn: 85, toe: 0},
+  legN: {hp: -82, kn: 82, toe: 0},
+  armN: {sh: -32, el: -98},
+  armF: {sh: -18, el: -65},
+  handN: 'grip',
+  handF: 'flat',
+  face: {mouth: 'smile', look: [0.6, 0.2]}
+});
+
+// Кружка в руке
+const mw = hero.wrist('N');
+const mugG = mk('g', {transform: `translate(${mw[0] + 16} ${mw[1] + 20}) scale(0.48)`}, W);
+mk('path', {d: 'M40 -70q42 0 42 34t-42 34', fill: 'none', stroke: '#211c1a', 'stroke-width': 13}, mugG);
+mk('path', {d: 'M-46 -96H46V-8Q46 4 34 4H-34Q-46 4 -46 -8Z', fill: '#D06A33', stroke: '#211c1a', 'stroke-width': 6}, mugG);
+mk('ellipse', {cx: 0, cy: -96, rx: 46, ry: 10, fill: '#6E3B22', stroke: '#211c1a', 'stroke-width': 5}, mugG);
+
+// Пар от кружки (живая анимация)
+const st = mk('path', {fill: 'none', stroke: '#F4EFE6', 'stroke-width': 5, 'stroke-linecap': 'round', opacity: 0.7}, mugG);
+
+// ══ Анимация закрытия штор и опускания плашки ══
+const G = document.getElementById('curt');
+const PT0 = 1.6, PT1 = 2.1, CT0 = 1.9, CT1 = 3.4;
+const XC = 540, TOP = 236, BOT = 1431, NP = 6, NY = 20;
+const INK = '#141413', CLAY2 = '#B4553A';
+const F1 = (v) => (+v).toFixed(1);
+const R_rect = (x, y, w, h, r = 0) => r ? `M${x + r} ${y}H${x + w - r}Q${x + w} ${y} ${x + w} ${y + r}V${y + h - r}Q${x + w} ${y + h} ${x + w - r} ${y + h}H${x + r}Q${x} ${y + h} ${x} ${y + h - r}V${y + r}Q${x} ${y} ${x + r} ${y}Z` : `M${x} ${y}H${x + w}V${y + h}H${x}Z`;
+const hs = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return (x - Math.floor(x)) * 2 - 1; };
+
+function el(tag, attrs = {}, parent = null) {
+  const n = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  if (parent) parent.appendChild(n);
+  return n;
+}
+const P_path = (par, w, op = 1) => el('path', {fill: 'none', stroke: INK, 'stroke-width': w, opacity: op, 'stroke-linecap': 'round', 'stroke-linejoin': 'round'}, par);
+const PL = (pts) => 'M' + pts.map((q) => F1(q[0]) + ' ' + F1(q[1])).join('L');
+const YS = [...Array(NY + 1)].map((_, j) => TOP + ((BOT - TOP) * j) / NY);
+
+const prog = (t, a, b) => Math.max(0, Math.min(1, (t - a) / (b - a)));
+const EASE = {
+  io2: (u) => u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2,
+  back: (u) => { const c = 1.70158; return (c + 1) * Math.pow(u - 1, 3) + c * Math.pow(u - 1, 2) + 1; }
+};
+
+const halves = [-1, 1].map((s) => {
+  const g = el('g', {}, G), id = s < 0 ? 'L' : 'R';
+  return {s, g, dir: -s, xs: s < 0 ? 55 : 1024, xc: XC - s * 6, pat: document.getElementById('curtTex' + id), base: el('path', {fill: `url(#curtTex${id})`}, g),
+    sh: [...Array(NP)].map(() => el('path', {fill: `url(#curtSh${id})`}, g)), hi: [...Array(NP)].map(() => el('path', {fill: 'url(#curtHi)'}, g)),
+    hat: P_path(g, 1.7, 0.75), fold: P_path(g, 2.4), fold2: P_path(g, 1.3, 0.5), edge: P_path(g, 3.6), edge2: P_path(g, 1.6, 0.6)};
+});
+
+// Табличка канала
+const svgDefs = document.querySelector('#svg defs');
+const QW = 720, QH = 332, QX = XC - QW / 2, QY = 668, QT0 = CT1 - 0.05, QA = [XC - 250, XC + 250];
+el('feGaussianBlur', {stdDeviation: 9}, el('filter', {id: 'plqSh', x: '-10%', y: '-20%', width: '120%', height: '140%'}, svgDefs));
+el('path', {d: R_rect(QX, QY, QW, QH, 10)}, el('clipPath', {id: 'plqClip'}, svgDefs));
+const qg = el('g', {}, G), qs = el('g', {}, qg);
+el('path', {d: R_rect(QX + 8, QY + 14, QW, QH, 10), fill: '#4A2414', opacity: 0.32, filter: 'url(#plqSh)'}, qs);
+el('image', {href: 'tex/plaque_logo.png', x: QX, y: QY, width: QW, height: QH, preserveAspectRatio: 'xMidYMid slice', 'clip-path': 'url(#plqClip)'}, qs);
+const qInk = P_path(qs, 3), qInk2 = P_path(qs, 1.4, 0.55), qCord = P_path(qg, 2.4), qr = el('g', {}, qg);
+QA.forEach((x) => el('circle', {cx: x, cy: QY + 24, r: 7, fill: 'none', stroke: INK, 'stroke-width': 2.4}, qr));
+const spring = (d) => { const z = 0.75, w = 8, wd = w * Math.sqrt(1 - z * z); return Math.exp(-z * w * d) * (Math.cos(wd * d) + (z * w / wd) * Math.sin(wd * d)); };
+
+// Ламбрекен
+const pg = el('g', {}, G), J = [55, 245, 435, 645, 835, 1024], YB = 352, DP = 80;
+let pd = `M55 200V${YB}H55`; for (let i = 0; i < 5; i++) pd += `Q${J[i] + 95} ${YB + DP} ${J[i + 1]} ${YB}`; pd += 'H1024V200Z';
+el('path', {d: pd, fill: 'url(#curtTexP)'}, pg); el('path', {d: pd, fill: CLAY2, opacity: 0.42}, pg);
+const pFold = P_path(pg, 2.0, 0.85), pHat = P_path(pg, 1.6, 0.75), pInk = P_path(pg, 3.4), pInk2 = P_path(pg, 1.6, 0.6);
+const tas = J.slice(1, 5).map((x) => {
+  const tg = el('g', {}, pg);
+  el('path', {d: `M${x} ${YB}V${YB + 20}`, fill: 'none', stroke: INK, 'stroke-width': 2.2}, tg);
+  el('path', {d: `M${x} ${YB + 18}C${x - 11} ${YB + 26} ${x - 11} ${YB + 46} ${x} ${YB + 52}C${x + 11} ${YB + 46} ${x + 11} ${YB + 26} ${x} ${YB + 18}Z`, fill: CLAY2, stroke: INK, 'stroke-width': 2.2}, tg);
+  el('path', {d: `M${x - 6} ${YB + 50}L${x - 7} ${YB + 62}M${x} ${YB + 52}V${YB + 64}M${x + 6} ${YB + 50}L${x + 7} ${YB + 62}`, fill: 'none', stroke: INK, 'stroke-width': 1.8, 'stroke-linecap': 'round'}, tg);
+  return {tg, x};
+});
+
+function renderFrame(t) {
+  // Анимация пара
+  const ph = t * 2.5;
+  st.setAttribute('d', `M-10 -115Q${(-18 + Math.sin(ph)*8).toFixed(1)} -140 ${(-5 + Math.sin(ph+1)*5).toFixed(1)} -165T-10 -215 M15 -115Q${(25 + Math.sin(ph+2)*8).toFixed(1)} -140 ${(12 + Math.sin(ph+3)*5).toFixed(1)} -165T15 -215`);
+
+  // Анимация штор
+  const vis = t >= PT0;
+  G.style.display = vis ? '' : 'none';
+  if (!vis) return;
+
+  const fs = Math.floor(t * 12), u = prog(t, CT0, CT1), e = EASE.io2(u);
+  const lag = t < CT1 ? 34 * Math.sin(Math.PI * u) : -14 * Math.exp(-(t - CT1) * 4.2) * Math.sin((t - CT1) * 12.5);
+
+  halves.forEach((H) => {
+    H.g.style.display = t >= CT0 ? '' : 'none';
+    if (t < CT0) return;
+    const xe = H.xs + (H.xc - H.xs) * e, sp = Math.abs(xe - H.xs) / NP, wa = Math.min(1, sp / 60);
+    const X = (q, y, k) => H.xs + (xe - H.xs) * q - H.dir * lag * q * Math.pow((y - TOP) / (BOT - TOP), 1.4) + wa * (3 + 4 * q) * Math.sin(y * 0.0042 + q * 9 + H.s) + 0.7 * hs(fs, k * 53 + y * 0.01);
+    const line = (q, k, dx = 0) => YS.map((y) => [X(q, y, k) + dx, y]);
+    const strip = (qa, qb, k) => PL([...line(qa, k + 20), ...line(qb, k).reverse()]) + 'Z';
+    H.pat.setAttribute('patternTransform', `translate(${F1(xe - H.xc)} 0)`);
+    H.base.setAttribute('d', PL([[H.xs - H.dir * 40, TOP], ...line(1, NP), [H.xs - H.dir * 40, BOT]]) + 'Z');
+    let fd = '', f2 = '', hd = '';
+    const hl = Math.min(15, sp * 0.42);
+    for (let k = 1; k <= NP; k++) {
+      const q = k / NP;
+      H.sh[k - 1].setAttribute('d', strip(q - 0.42 / NP, q, k));
+      H.hi[k - 1].setAttribute('d', strip(q - 0.86 / NP, q - 0.56 / NP, k + 60));
+      if (k < NP) { fd += PL(line(q, k)); if (k % 2) f2 += PL(line(q, k + 40, 2.2 * H.dir)); }
+      for (let j = 0, y = TOP + 150 + (k % 2) * 11; y < BOT - 10; j++, y += 23) if (hs(k, j) > -0.3) {
+        const xk = X(q, y, k); hd += `M${F1(xk - H.dir * (hl + 4))} ${F1(y + 8 + 0.6 * hs(fs, k * 7 + j))}L${F1(xk - H.dir * 4)} ${F1(y - 7)}`;
+      }
+    }
+    H.fold.setAttribute('d', fd); H.fold2.setAttribute('d', f2); H.hat.setAttribute('d', hd);
+    H.edge.setAttribute('d', PL(line(1, NP))); H.edge2.setAttribute('d', PL(line(1, NP + 30, -2.6 * H.dir)));
+  });
+
+  qg.style.display = t >= QT0 ? '' : 'none';
+  if (t >= QT0) {
+    const d = t - QT0, dy = -780 * spring(d), dx = 9 * Math.exp(-d * 1.8) * Math.sin(d * 6.5), tr = `translate(${F1(dx)} ${F1(dy)})`, jq = (k) => 0.7 * hs(fs, 300 + k);
+    qs.setAttribute('transform', tr); qr.setAttribute('transform', tr);
+    qCord.setAttribute('d', QA.map((x, i) => `M${x} 200L${F1(x + dx / 2 + jq(i))} ${F1((200 + QY + 17 + dy) / 2)}L${F1(x + dx)} ${F1(QY + 17 + dy)}`).join(''));
+    qInk.setAttribute('d', R_rect(QX + jq(2), QY + jq(3), QW + jq(4), QH + jq(5), 10));
+    qInk2.setAttribute('d', R_rect(QX + 4 + jq(6), QY + 3 + jq(7), QW - 7 + jq(8), QH - 5 + jq(9), 9));
+  }
+
+  const pu = prog(t, PT0, PT1);
+  pg.setAttribute('transform', `translate(0 ${F1(-190 * (1 - EASE.back(pu)))})`);
+}
+
+window.__seek = (t) => { renderFrame(t); return 0; };
+window.__duration = DUR;
+window.__ready = Promise.all([document.fonts.ready]);
+</script>
+</body></html>
