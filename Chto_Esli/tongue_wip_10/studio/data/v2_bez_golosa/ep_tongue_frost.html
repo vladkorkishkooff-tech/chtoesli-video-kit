@@ -1,0 +1,22 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Что если язык прилип к качелям на морозе?</title><style>
+@font-face{font-family:PF;src:url(fonts/PlayfairDisplay-Bold.ttf)}
+@font-face{font-family:PFX;src:url(fonts/PlayfairDisplay-ExtraBold.ttf)}
+@font-face{font-family:CV;src:url(fonts/Caveat.ttf);font-weight:400 700}
+@font-face{font-family:MS;src:url(fonts/Montserrat.ttf);font-weight:100 900}
+html,body{margin:0;background:#000}
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:#000}
+#stage>*{position:absolute;left:0;top:0}
+#vig{width:1080px;height:1920px;background:radial-gradient(ellipse 80% 66% at 50% 47%, rgba(0,0,0,0) 50%, rgba(11,8,24,.62) 100%)}
+.gr{width:1080px;height:1920px;mix-blend-mode:overlay;opacity:.22;display:none}
+.ns path,.ns rect,.ns ellipse{vector-effect:non-scaling-stroke}
+</style></head><body><div id="stage">
+<svg id="sv" width="1080" height="1920" viewBox="0 0 1080 1920"><defs></defs><g id="world"></g></svg>
+<div id="vig"></div>
+<svg id="ui" width="1080" height="1920" viewBox="0 0 1080 1920"><defs></defs><g id="uiw"></g></svg>
+<img class="gr" src="tex/grain2_0.png"><img class="gr" src="tex/grain2_1.png"><img class="gr" src="tex/grain2_2.png"><img class="gr" src="tex/grain2_3.png">
+<img class="gr" src="tex/grain2_4.png"><img class="gr" src="tex/grain2_5.png"><img class="gr" src="tex/grain2_6.png"><img class="gr" src="tex/grain2_7.png">
+</div>
+<script src="lib/geom2.js"></script><script src="lib/look2.js"></script><script src="lib/yard2.js"></script><script src="lib/sosed2.js"></script><script src="lib/cat2.js"></script>
+<script src="tf_core.js"></script><script src="tf_a.js"></script><script src="tf_a2.js"></script><script src="tf_b.js"></script><script src="tf_c.js"></script>
+<script>TF.start();</script>
+</body></html>

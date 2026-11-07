@@ -1,0 +1,26 @@
+# ── Тяжёлые медиа ───────────────────────────────────────────────
+# В git не храним, чтобы архив не раздувался вдвое.
+# Их отпечатки (sha256) лежат в MEDIA.sha256 и попадают в каждый коммит.
+*.jpg
+*.jpeg
+*.mp4
+*.mov
+*.webm
+*.ogv
+*.wav
+*.zip
+03_style/references/
+08_prototypes/remotion/public/grain/
+
+# ── Godot: кеш редактора и сборки ───────────────────────────────
+09_game/.godot/
+09_game/build/*
+!09_game/build/.gdignore
+*.tmp
+
+# ── Системный мусор ─────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+node_modules/
+__pycache__/

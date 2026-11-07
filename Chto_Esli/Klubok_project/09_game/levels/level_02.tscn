@@ -1,0 +1,56 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://core/level.gd" id="1_level"]
+[ext_resource type="Script" path="res://core/room.gd" id="2_room"]
+[ext_resource type="Script" path="res://core/furniture.gd" id="3_furn"]
+[ext_resource type="Script" path="res://parts/beam.gd" id="4_beam"]
+[ext_resource type="Script" path="res://parts/yarn.gd" id="5_yarn"]
+[ext_resource type="Script" path="res://parts/cat.gd" id="6_cat"]
+[ext_resource type="Script" path="res://core/glow.gd" id="7_glow"]
+[ext_resource type="Script" path="res://core/no_build_zone.gd" id="8_zone"]
+
+[node name="Level02" type="Node2D"]
+script = ExtResource("1_level")
+number = 2
+level_title = "Порог"
+principle = "Клин — мягкий въезд"
+hint = "Клубок не перепрыгнет ступеньку. Перетащи клин из инвентаря"
+beams = 1
+wedges = 2
+thread_length = 1800.0
+solution = [{"type": "wedge", "pos": Vector2(640, 544), "flip": false}]
+
+[node name="Room" type="Node2D" parent="."]
+script = ExtResource("2_room")
+window_x = 1000
+
+[node name="Light" type="Node2D" parent="."]
+script = ExtResource("7_glow")
+position = Vector2(118, 0)
+kind = "cone"
+size = Vector2(250, 400)
+energy = 0.45
+
+[node name="Step" type="StaticBody2D" parent="."]
+script = ExtResource("3_furn")
+position = Vector2(704, 512)
+kind = "step"
+size = Vector2(576, 64)
+
+[node name="Ramp" type="RigidBody2D" parent="."]
+script = ExtResource("4_beam")
+position = Vector2(64, 384)
+cells = 6
+angle_step = 2
+locked = true
+
+[node name="Parts" type="Node2D" parent="."]
+
+[node name="Yarn" type="RigidBody2D" parent="."]
+script = ExtResource("5_yarn")
+position = Vector2(118.1, 378.3)
+
+[node name="Cat" type="StaticBody2D" parent="."]
+script = ExtResource("6_cat")
+position = Vector2(1000, 512)
+facing = -1

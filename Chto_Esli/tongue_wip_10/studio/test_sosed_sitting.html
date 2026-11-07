@@ -1,0 +1,60 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:PF;src:url(fonts/PlayfairDisplay-Bold.ttf)}
+@font-face{font-family:CV;src:url(fonts/Caveat.ttf)}
+html,body{margin:0;background:#F4F1EB}
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden}
+#stage>*{position:absolute;left:0;top:0}
+.gr{width:1080px;height:1920px;mix-blend-mode:overlay;opacity:.16}
+</style></head><body><div id="stage">
+<svg id="sv" width="1080" height="1920" viewBox="0 0 1080 1920"><defs></defs><g id="world"></g></svg>
+<svg id="ui" width="1080" height="1920" viewBox="0 0 1080 1920"><defs></defs><g id="uiw"></g></svg>
+<img class="gr" src="tex/grain2_0.png">
+</div>
+<script src="lib/geom2.js"></script><script src="lib/look2.js"></script><script src="lib/yard2.js"></script><script src="lib/sosed2.js"></script><script src="lib/cat2.js"></script>
+<script>
+const {mk} = GEOM2, L2 = LOOK2, Y = YARD2, S2 = SOSED2(), K = CAT2();
+const D = document.querySelector('#sv defs'), W = document.getElementById('world'), UI = document.getElementById('uiw');
+const rm = Y.room(W, D, {lw: 2.8});
+
+// Ковёр на полу
+const rug = mk('g', {}, W);
+Y.P(rug, 'M150 1336L930 1336L1030 1776L50 1776Z', '#76565E', '#211c1a', 2.6);
+Y.P(rug, 'M186 1362L894 1362L980 1748L100 1748Z', null, '#B48A84', 5, {opacity: 0.55});
+
+// Канонический кот на правом сиденье дивана
+const catImg = mk('image', {
+  href: 'cat_rgba.png',
+  x: 600,
+  y: 1040,
+  width: 250,
+  height: 100
+}, W);
+
+// Герой сидит на левом сиденье дивана:
+// Пол на y = 1240..1330. Ноги достают до пола/ковра.
+// Попа героя на подушке дивана (y ~ 1112).
+const hero = S2.side(W, {s: 0.52, lw: 3.2, off: 2});
+hero.set({
+  x: 370,
+  y: 1360,
+  legF: {hp: 85, kn: -90, toe: 0},
+  legN: {hp: 82, kn: -88, toe: 0},
+  armN: {sh: -35, el: -95},
+  armF: {sh: -20, el: -60},
+  handN: 'grip',
+  handF: 'flat',
+  face: {mouth: 'smile', look: [0.6, 0.2]}
+});
+
+// Кружка в руке (рука героя держит ручку кружки)
+const mw = hero.wrist('N');
+const mugG = mk('g', {transform: `translate(${mw[0] + 16} ${mw[1] + 20}) scale(0.48)`}, W);
+mk('path', {d: 'M40 -70q42 0 42 34t-42 34', fill: 'none', stroke: '#211c1a', 'stroke-width': 13}, mugG);
+mk('path', {d: 'M-46 -96H46V-8Q46 4 34 4H-34Q-46 4 -46 -8Z', fill: '#D06A33', stroke: '#211c1a', 'stroke-width': 6}, mugG);
+mk('ellipse', {cx: 0, cy: -96, rx: 46, ry: 10, fill: '#6E3B22', stroke: '#211c1a', 'stroke-width': 5}, mugG);
+// Пар от кружки
+const st = mk('path', {d: 'M-10 -115Q-18 -140 -5 -165T-10 -215 M15 -115Q25 -140 12 -165T15 -215', fill: 'none', stroke: '#F4EFE6', 'stroke-width': 6, 'stroke-linecap': 'round', opacity: 0.7}, mugG);
+
+window.__seek = () => {}; window.__duration = 1;
+window.__ready = (async () => { await document.fonts.ready; })();
+</script></body></html>

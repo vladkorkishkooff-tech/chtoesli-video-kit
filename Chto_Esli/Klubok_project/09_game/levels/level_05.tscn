@@ -1,0 +1,70 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://core/level.gd" id="1_level"]
+[ext_resource type="Script" path="res://parts/beam.gd" id="2_beam"]
+[ext_resource type="Script" path="res://parts/cat.gd" id="3_cat"]
+[ext_resource type="Script" path="res://core/furniture.gd" id="4_furn"]
+[ext_resource type="Script" path="res://core/glow.gd" id="5_glow"]
+[ext_resource type="Script" path="res://core/room.gd" id="6_room"]
+[ext_resource type="Script" path="res://parts/yarn.gd" id="7_yarn"]
+[ext_resource type="Script" path="res://core/no_build_zone.gd" id="8_zone"]
+
+[node name="Level05" type="Node2D"]
+script = ExtResource("1_level")
+number = 5
+level_title = "Рикошет"
+principle = "Отскок: как упал на наклон, так и отлетел — зеркально"
+hint = "Мандарин прыгает. Урони его на клин — отскочит вбок и толкнёт клубок"
+beams = 1
+wedges = 2
+mandarins = 2
+thread_length = 1800.0
+time_limit = 15.0
+must_fail = [[{"type": "mandarin", "pos": Vector2(288, 160)}], [{"type": "mandarin", "pos": Vector2(512, 200)}], [{"type": "wedge", "pos": Vector2(288, 352), "flip": false}, {"type": "mandarin", "pos": Vector2(288, 160)}]]
+solution = [{"type": "wedge", "pos": Vector2(288, 352), "flip": true}, {"type": "mandarin", "pos": Vector2(288, 160)}]
+
+[node name="Room" type="Node2D" parent="."]
+script = ExtResource("6_room")
+window_x = 1010
+
+[node name="Light" type="Node2D" parent="."]
+script = ExtResource("5_glow")
+position = Vector2(400, 0)
+kind = "cone"
+size = Vector2(250, 330)
+energy = 0.45
+
+[node name="Shelf" type="StaticBody2D" parent="."]
+script = ExtResource("4_furn")
+position = Vector2(96, 384)
+kind = "shelf"
+size = Vector2(512, 16)
+
+[node name="Roof" type="StaticBody2D" parent="."]
+script = ExtResource("4_furn")
+position = Vector2(400, 268)
+kind = "shelf"
+size = Vector2(160, 16)
+
+[node name="NoBuild" type="Node2D" parent="."]
+script = ExtResource("8_zone")
+position = Vector2(400, 284)
+size = Vector2(160, 100)
+
+[node name="Ramp" type="RigidBody2D" parent="."]
+script = ExtResource("2_beam")
+position = Vector2(608, 440)
+cells = 4
+angle_step = 2
+locked = true
+
+[node name="Parts" type="Node2D" parent="."]
+
+[node name="Yarn" type="RigidBody2D" parent="."]
+script = ExtResource("7_yarn")
+position = Vector2(512, 358)
+
+[node name="Cat" type="StaticBody2D" parent="."]
+script = ExtResource("3_cat")
+position = Vector2(1110, 576)
+facing = -1

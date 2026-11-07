@@ -1,0 +1,62 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://core/level.gd" id="1_level"]
+[ext_resource type="Script" path="res://parts/beam.gd" id="2_beam"]
+[ext_resource type="Script" path="res://parts/cat.gd" id="3_cat"]
+[ext_resource type="Script" path="res://core/furniture.gd" id="4_furn"]
+[ext_resource type="Script" path="res://core/glow.gd" id="5_glow"]
+[ext_resource type="Script" path="res://core/room.gd" id="6_room"]
+[ext_resource type="Script" path="res://parts/yarn.gd" id="7_yarn"]
+
+[node name="Level07" type="Node2D"]
+script = ExtResource("1_level")
+number = 7
+level_title = "Батут"
+principle = "Батут возвращает почти всю высоту падения — но не больше"
+hint = "Коробку не перекатить. Подставь батут туда, куда падает клубок"
+beams = 1
+trampolines = 2
+thread_length = 1800.0
+time_limit = 15.0
+solution = [{"type": "trampoline", "pos": Vector2(464, 560)}]
+
+[node name="Room" type="Node2D" parent="."]
+script = ExtResource("6_room")
+window_x = 1060
+
+[node name="Light" type="Node2D" parent="."]
+script = ExtResource("5_glow")
+position = Vector2(128, 0)
+kind = "cone"
+size = Vector2(250, 200)
+energy = 0.45
+
+[node name="Shelf" type="StaticBody2D" parent="."]
+script = ExtResource("4_furn")
+position = Vector2(32, 192)
+kind = "shelf"
+size = Vector2(160, 16)
+
+[node name="Ramp" type="RigidBody2D" parent="."]
+script = ExtResource("2_beam")
+position = Vector2(192, 200)
+cells = 3
+angle_step = 1
+locked = true
+
+[node name="ToyBox" type="StaticBody2D" parent="."]
+script = ExtResource("4_furn")
+position = Vector2(640, 384)
+kind = "box"
+size = Vector2(128, 192)
+
+[node name="Parts" type="Node2D" parent="."]
+
+[node name="Yarn" type="RigidBody2D" parent="."]
+script = ExtResource("7_yarn")
+position = Vector2(224, 176)
+
+[node name="Cat" type="StaticBody2D" parent="."]
+script = ExtResource("3_cat")
+position = Vector2(1100, 576)
+facing = -1

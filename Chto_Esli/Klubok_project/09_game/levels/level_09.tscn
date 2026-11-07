@@ -1,0 +1,54 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://core/level.gd" id="1_level"]
+[ext_resource type="Script" path="res://parts/cat.gd" id="2_cat"]
+[ext_resource type="Script" path="res://core/furniture.gd" id="3_furn"]
+[ext_resource type="Script" path="res://parts/hanger.gd" id="4_hanger"]
+[ext_resource type="Script" path="res://core/room.gd" id="5_room"]
+[ext_resource type="Script" path="res://parts/yarn.gd" id="6_yarn"]
+
+[node name="Level09" type="Node2D"]
+script = ExtResource("1_level")
+number = 9
+level_title = "Свеча и качели"
+principle = "Пламя освобождает груз, а груз запускает рычаг"
+hint = "Пережги нитку и построй качели: гвоздь — в середину балки"
+beams = 2
+nails = 2
+candles = 1
+cubes = 1
+thread_length = 1800.0
+time_limit = 15.0
+must_fail = [[{"type": "candle", "pos": Vector2(480, 216)}], [{"type": "beam", "a": Vector2(448, 448), "step": 0, "cells": 4, "nail": 2}]]
+solution = [{"type": "candle", "pos": Vector2(480, 216)}, {"type": "beam", "a": Vector2(448, 448), "step": 0, "cells": 4, "nail": 2}]
+
+[node name="Room" type="Node2D" parent="."]
+script = ExtResource("5_room")
+
+[node name="CandleShelf" type="StaticBody2D" parent="."]
+script = ExtResource("3_furn")
+position = Vector2(400, 240)
+kind = "shelf"
+size = Vector2(80, 16)
+
+[node name="Box" type="StaticBody2D" parent="."]
+script = ExtResource("3_furn")
+position = Vector2(752, 512)
+kind = "box"
+size = Vector2(96, 64)
+
+[node name="Hanger" type="Node2D" parent="."]
+script = ExtResource("4_hanger")
+position = Vector2(492, 128)
+length = 246.0
+
+[node name="Parts" type="Node2D" parent="."]
+
+[node name="Yarn" type="RigidBody2D" parent="."]
+script = ExtResource("6_yarn")
+position = Vector2(672, 416)
+
+[node name="Cat" type="StaticBody2D" parent="."]
+script = ExtResource("2_cat")
+position = Vector2(1110, 576)
+facing = -1

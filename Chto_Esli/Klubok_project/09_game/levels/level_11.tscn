@@ -1,0 +1,61 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://core/level.gd" id="1_level"]
+[ext_resource type="Script" path="res://parts/beam.gd" id="2_beam"]
+[ext_resource type="Script" path="res://parts/cat.gd" id="3_cat"]
+[ext_resource type="Script" path="res://core/furniture.gd" id="4_furn"]
+[ext_resource type="Script" path="res://parts/hanger.gd" id="5_hanger"]
+[ext_resource type="Script" path="res://core/room.gd" id="6_room"]
+[ext_resource type="Script" path="res://parts/yarn.gd" id="7_yarn"]
+
+[node name="Level11" type="Node2D"]
+script = ExtResource("1_level")
+number = 11
+level_title = "Огонёк и домино"
+principle = "Свеча освобождает груз — тот запускает цепь домино"
+hint = "Пламя может пережечь нитку. Поставь костяшки достаточно близко"
+beams = 1
+candles = 1
+dominoes = 12
+thread_length = 1800.0
+time_limit = 15.0
+must_fail = [[{"type": "candle", "pos": Vector2(304, 216)}], [{"type": "domino", "pos": Vector2(336, 384)}, {"type": "domino", "pos": Vector2(384, 384)}, {"type": "domino", "pos": Vector2(432, 384)}, {"type": "domino", "pos": Vector2(480, 384)}, {"type": "domino", "pos": Vector2(528, 384)}, {"type": "domino", "pos": Vector2(576, 384)}, {"type": "domino", "pos": Vector2(624, 384)}]]
+solution = [{"type": "candle", "pos": Vector2(304, 216)}, {"type": "domino", "pos": Vector2(336, 384)}, {"type": "domino", "pos": Vector2(384, 384)}, {"type": "domino", "pos": Vector2(432, 384)}, {"type": "domino", "pos": Vector2(480, 384)}, {"type": "domino", "pos": Vector2(528, 384)}, {"type": "domino", "pos": Vector2(576, 384)}, {"type": "domino", "pos": Vector2(624, 384)}]
+
+[node name="Room" type="Node2D" parent="."]
+script = ExtResource("6_room")
+
+[node name="Shelf" type="StaticBody2D" parent="."]
+script = ExtResource("4_furn")
+position = Vector2(256, 416)
+kind = "shelf"
+size = Vector2(448, 16)
+
+[node name="CandleShelf" type="StaticBody2D" parent="."]
+script = ExtResource("4_furn")
+position = Vector2(224, 240)
+kind = "shelf"
+size = Vector2(80, 16)
+
+[node name="Ramp" type="RigidBody2D" parent="."]
+script = ExtResource("2_beam")
+position = Vector2(720, 448)
+cells = 4
+angle_step = 2
+locked = true
+
+[node name="Hanger" type="Node2D" parent="."]
+script = ExtResource("5_hanger")
+position = Vector2(316, 128)
+length = 142.0
+
+[node name="Parts" type="Node2D" parent="."]
+
+[node name="Yarn" type="RigidBody2D" parent="."]
+script = ExtResource("7_yarn")
+position = Vector2(700, 390)
+
+[node name="Cat" type="StaticBody2D" parent="."]
+script = ExtResource("3_cat")
+position = Vector2(1110, 576)
+facing = -1

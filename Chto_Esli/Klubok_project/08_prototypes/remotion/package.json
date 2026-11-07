@@ -1,0 +1,15 @@
+{
+  "name": "klubok-anim",
+  "private": true,
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render:meter": "remotion render src/index.ts AngerMeter out/anger_meter_prototype.mp4",
+    "render:rage": "remotion render src/index.ts RageAnimatic out/rage_tree_animatic.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.454",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remotion": "4.0.454"
+  }
+}

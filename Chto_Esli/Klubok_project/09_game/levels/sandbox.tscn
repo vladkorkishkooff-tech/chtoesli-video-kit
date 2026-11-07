@@ -1,0 +1,79 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://parts/outlet.gd" id="99_outlet"]
+
+[ext_resource type="Script" path="res://core/level.gd" id="1_level"]
+[ext_resource type="Script" path="res://core/room.gd" id="2_room"]
+[ext_resource type="Script" path="res://core/furniture.gd" id="3_furn"]
+[ext_resource type="Script" path="res://parts/beam.gd" id="4_beam"]
+[ext_resource type="Script" path="res://parts/yarn.gd" id="5_yarn"]
+[ext_resource type="Script" path="res://parts/cat.gd" id="6_cat"]
+[ext_resource type="Script" path="res://core/glow.gd" id="7_glow"]
+[ext_resource type="Script" path="res://core/no_build_zone.gd" id="8_zone"]
+
+[node name="Sandbox" type="Node2D"]
+script = ExtResource("1_level")
+number = 0
+level_title = "Песочница"
+location = "Гостиная"
+principle = "Пробуй что угодно"
+hint = "Здесь можно экспериментировать со всеми деталями"
+beams = 8
+nails = 3
+cubes = 4
+wedges = 3
+mandarins = 4
+dominoes = 8
+trampolines = 3
+pillows = 3
+candles = 3
+fans = 3
+thread_length = 3000.0
+time_limit = 20.0
+
+[node name="Room" type="Node2D" parent="."]
+script = ExtResource("2_room")
+window_x = 1060
+
+[node name="Light" type="Node2D" parent="."]
+script = ExtResource("7_glow")
+position = Vector2(115, 0)
+kind = "cone"
+size = Vector2(250, 210)
+energy = 0.45
+
+[node name="Ramp" type="RigidBody2D" parent="."]
+script = ExtResource("4_beam")
+position = Vector2(64, 192)
+cells = 3
+angle_step = 1
+locked = true
+
+[node name="Dresser" type="StaticBody2D" parent="."]
+position = Vector2(896, 384)
+script = ExtResource("3_furn")
+kind = "dresser"
+size = Vector2(320, 192)
+
+[node name="Outlet1" type="Node2D" parent="."]
+script = ExtResource("99_outlet")
+position = Vector2(224, 360)
+
+[node name="Outlet2" type="Node2D" parent="."]
+script = ExtResource("99_outlet")
+position = Vector2(640, 360)
+
+[node name="Outlet3" type="Node2D" parent="."]
+script = ExtResource("99_outlet")
+position = Vector2(1056, 360)
+
+[node name="Parts" type="Node2D" parent="."]
+
+[node name="Yarn" type="RigidBody2D" parent="."]
+script = ExtResource("5_yarn")
+position = Vector2(114.8, 172.5)
+
+[node name="Cat" type="StaticBody2D" parent="."]
+script = ExtResource("6_cat")
+position = Vector2(1100, 384)
+facing = -1

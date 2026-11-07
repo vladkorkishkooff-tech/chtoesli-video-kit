@@ -1,0 +1,64 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://core/level.gd" id="1_level"]
+[ext_resource type="Script" path="res://parts/beam.gd" id="2_beam"]
+[ext_resource type="Script" path="res://parts/cat.gd" id="3_cat"]
+[ext_resource type="Script" path="res://core/furniture.gd" id="4_furn"]
+[ext_resource type="Script" path="res://core/glow.gd" id="5_glow"]
+[ext_resource type="Script" path="res://core/room.gd" id="6_room"]
+[ext_resource type="Script" path="res://parts/yarn.gd" id="7_yarn"]
+[ext_resource type="Script" path="res://core/no_build_zone.gd" id="8_zone"]
+
+[node name="Level06" type="Node2D"]
+script = ExtResource("1_level")
+number = 6
+level_title = "Домино"
+principle = "Цепная реакция: падая, костяшка роняет соседку"
+hint = "Первую костяшку толкнёт маятник — помнишь, как его сделать? Костяшки ставь ближе, чем их высота"
+beams = 2
+nails = 2
+dominoes = 12
+thread_length = 1800.0
+time_limit = 15.0
+must_fail = [[{"type": "beam", "a": Vector2(320, 192), "step": 12, "cells": 3, "nail": 0}], [{"type": "domino", "pos": Vector2(336, 384)}, {"type": "domino", "pos": Vector2(384, 384)}, {"type": "domino", "pos": Vector2(432, 384)}, {"type": "domino", "pos": Vector2(480, 384)}, {"type": "domino", "pos": Vector2(528, 384)}, {"type": "domino", "pos": Vector2(576, 384)}, {"type": "domino", "pos": Vector2(624, 384)}]]
+solution = [{"type": "beam", "a": Vector2(320, 192), "step": 12, "cells": 3, "nail": 0}, {"type": "domino", "pos": Vector2(336, 384)}, {"type": "domino", "pos": Vector2(384, 384)}, {"type": "domino", "pos": Vector2(432, 384)}, {"type": "domino", "pos": Vector2(480, 384)}, {"type": "domino", "pos": Vector2(528, 384)}, {"type": "domino", "pos": Vector2(576, 384)}, {"type": "domino", "pos": Vector2(624, 384)}]
+
+[node name="Room" type="Node2D" parent="."]
+script = ExtResource("6_room")
+window_x = 1010
+
+[node name="Light" type="Node2D" parent="."]
+script = ExtResource("5_glow")
+position = Vector2(480, 0)
+kind = "cone"
+size = Vector2(250, 360)
+energy = 0.45
+
+[node name="Shelf" type="StaticBody2D" parent="."]
+script = ExtResource("4_furn")
+position = Vector2(256, 416)
+kind = "shelf"
+size = Vector2(448, 16)
+
+[node name="NoBuild" type="Node2D" parent="."]
+script = ExtResource("8_zone")
+position = Vector2(512, 80)
+size = Vector2(256, 256)
+
+[node name="Ramp" type="RigidBody2D" parent="."]
+script = ExtResource("2_beam")
+position = Vector2(720, 448)
+cells = 4
+angle_step = 2
+locked = true
+
+[node name="Parts" type="Node2D" parent="."]
+
+[node name="Yarn" type="RigidBody2D" parent="."]
+script = ExtResource("7_yarn")
+position = Vector2(700, 390)
+
+[node name="Cat" type="StaticBody2D" parent="."]
+script = ExtResource("3_cat")
+position = Vector2(1110, 576)
+facing = -1

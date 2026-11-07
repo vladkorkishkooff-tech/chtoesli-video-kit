@@ -1,0 +1,54 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://core/level.gd" id="1_level"]
+[ext_resource type="Script" path="res://parts/cat.gd" id="2_cat"]
+[ext_resource type="Script" path="res://core/furniture.gd" id="3_furn"]
+[ext_resource type="Script" path="res://core/room.gd" id="4_room"]
+[ext_resource type="Script" path="res://parts/yarn.gd" id="5_yarn"]
+[ext_resource type="Script" path="res://core/no_build_zone.gd" id="6_zone"]
+
+[node name="Level12" type="Node2D"]
+script = ExtResource("1_level")
+number = 12
+level_title = "Большая машина"
+principle = "Маятник запускает домино, а батут перебрасывает клубок"
+hint = "Сначала цепная реакция, потом прыжок через коробку"
+beams = 2
+nails = 2
+dominoes = 12
+trampolines = 2
+thread_length = 2200.0
+time_limit = 18.0
+must_fail = [[{"type": "beam", "a": Vector2(320, 192), "step": 12, "cells": 3, "nail": 0}, {"type": "domino", "pos": Vector2(336, 384)}, {"type": "domino", "pos": Vector2(384, 384)}, {"type": "domino", "pos": Vector2(432, 384)}, {"type": "domino", "pos": Vector2(480, 384)}, {"type": "domino", "pos": Vector2(528, 384)}, {"type": "domino", "pos": Vector2(576, 384)}, {"type": "domino", "pos": Vector2(624, 384)}], [{"type": "trampoline", "pos": Vector2(752, 560)}]]
+solution = [{"type": "beam", "a": Vector2(320, 192), "step": 12, "cells": 3, "nail": 0}, {"type": "domino", "pos": Vector2(336, 384)}, {"type": "domino", "pos": Vector2(384, 384)}, {"type": "domino", "pos": Vector2(432, 384)}, {"type": "domino", "pos": Vector2(480, 384)}, {"type": "domino", "pos": Vector2(528, 384)}, {"type": "domino", "pos": Vector2(576, 384)}, {"type": "domino", "pos": Vector2(624, 384)}, {"type": "trampoline", "pos": Vector2(752, 560)}]
+
+[node name="Room" type="Node2D" parent="."]
+script = ExtResource("4_room")
+
+[node name="Shelf" type="StaticBody2D" parent="."]
+script = ExtResource("3_furn")
+position = Vector2(256, 416)
+kind = "shelf"
+size = Vector2(448, 16)
+
+[node name="NoBuild" type="Node2D" parent="."]
+script = ExtResource("6_zone")
+position = Vector2(512, 80)
+size = Vector2(256, 256)
+
+[node name="Box" type="StaticBody2D" parent="."]
+script = ExtResource("3_furn")
+position = Vector2(880, 536)
+kind = "box"
+size = Vector2(128, 40)
+
+[node name="Parts" type="Node2D" parent="."]
+
+[node name="Yarn" type="RigidBody2D" parent="."]
+script = ExtResource("5_yarn")
+position = Vector2(700, 390)
+
+[node name="Cat" type="StaticBody2D" parent="."]
+script = ExtResource("2_cat")
+position = Vector2(1110, 576)
+facing = -1
