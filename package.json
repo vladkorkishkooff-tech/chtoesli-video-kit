@@ -1,0 +1,8 @@
+{
+  "name": "chtoesli-video-kit",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Локальная мастерская вертикальных роликов",
+  "engines": {"node": ">=20"},
+  "dependencies": {"playwright": "1.63.0"}
+}

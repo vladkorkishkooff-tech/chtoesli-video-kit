@@ -1,0 +1,11 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#F4F1EB}svg{display:block}</style></head><body>
+<svg id="sv" width="1080" height="1920" viewBox="0 0 1080 1920"><defs></defs><rect width="1080" height="1920" fill="#C9CFDF"/><g id="w"></g></svg>
+<script src="lib/geom2.js"></script><script src="lib/cat2.js"></script><script src="lib/sosed2.js"></script>
+<script>
+const W = document.getElementById('w'), K = CAT2(), S2 = SOSED2();
+const modes = [['open', {}], ['shock', {paw: 1, pawTo: [-44, -250]}], ['half', {look: [1, 0]}], ['sad', {paw: 1, pawTo: [0, -170]}]];
+modes.forEach(([e, ex], i) => { const c = K.sit(W, {s: 0.9, lw: 3}); c.set(Object.assign({x: 150 + (i % 2) * 520, y: 520 + Math.floor(i / 2) * 520, eye: e, tail: 0.2, mouth: e === 'shock' ? 'o' : 'w'}, ex)); });
+const l = K.loaf(W, {s: 1, lw: 3}); l.set({x: 540, y: 1500, t: 0});
+const a = S2.side(W, {s: 1.4, lw: 3.8}); a.set({x: 400, y: 3220, face: {mouth: 'tongue', tongue: 1, eye: 'wide', brow: 0.8}});
+window.__seek = () => {}; window.__duration = 1; window.__ready = Promise.resolve();
+</script></body></html>

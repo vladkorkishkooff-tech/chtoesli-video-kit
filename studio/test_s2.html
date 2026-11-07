@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;background:#F4F1EB}svg{display:block}</style></head><body>
+<svg id="sv" width="1080" height="1920" viewBox="0 0 1080 1920"><defs></defs><rect width="1080" height="1920" fill="#F4F1EB"/><g id="w"></g></svg>
+<script src="lib/geom2.js"></script><script src="lib/sosed2.js"></script>
+<script>
+const W = document.getElementById('w'), S2 = SOSED2();
+const mkT = (x, y, t) => { const n = document.createElementNS('http://www.w3.org/2000/svg', 'text'); n.setAttribute('x', x); n.setAttribute('y', y); n.setAttribute('font-size', 26); n.setAttribute('text-anchor', 'middle'); n.setAttribute('font-family', 'Georgia'); n.textContent = t; W.appendChild(n); };
+// ряд 1: в рост
+const f1 = S2.front(W, {s: 0.5, lw: 3.2}); f1.set({x: 170, y: 640, face: {mouth: 'smile'}});
+const a1 = S2.side(W, {s: 0.5, lw: 3.2}); a1.set({x: 470, y: 640, armN: {sh: -78, el: -6}, armF: {sh: -74, el: -8}, handN: 'flat', handF: 'flat', face: {mouth: 'smile'}});
+const a2 = S2.side(W, {s: 0.5, lw: 3.2}); a2.set({x: 800, y: 640, face: {mouth: 'smirk'}, armN: {sh: -40, el: -100}, handN: 'phone'});
+// ряд 2: лица анфас (только голова — обрезка)
+const faces = [['спокоен', {mouth: 'smile'}], ['рад', {mouth: 'grin', brow: 0.6}], ['тревога', {mouth: 'frown', worry: 1}], ['удивлён', {mouth: 'o', brow: 1, eye: 'wide'}], ['спит', {mouth: 'flat', eye: 'closed'}]];
+faces.forEach(([n, fc], i) => { const g = document.createElementNS('http://www.w3.org/2000/svg','g'); g.setAttribute('clip-path','url(#cf'+i+')'); W.appendChild(g);
+  const cp = document.createElementNS('http://www.w3.org/2000/svg','clipPath'); cp.id='cf'+i; const r=document.createElementNS('http://www.w3.org/2000/svg','rect'); r.setAttribute('x', 8+i*214); r.setAttribute('y', 700); r.setAttribute('width', 206); r.setAttribute('height', 330); r.setAttribute('rx', 18); cp.appendChild(r); document.querySelector('defs').appendChild(cp);
+  const f = S2.front(g, {s: 0.95, lw: 3.4}); f.set({x: 111 + i * 214, y: 1715, face: fc, legs: false}); mkT(111 + i * 214, 1060, n); });
+// ряд 3: профиль крупно
+const sp = [['язык', {mouth: 'tongue', tongue: 1, eye: 'wide', brow: 0.8}], ['выдох', {mouth: 'open', eye: 'closed'}], ['тревога', {mouth: 'frown', worry: 1, eye: 'wide'}], ['ухмылка', {mouth: 'smirk', eye: 'open'}]];
+sp.forEach(([n, fc], i) => { const g = document.createElementNS('http://www.w3.org/2000/svg','g'); g.setAttribute('clip-path','url(#cs'+i+')'); W.appendChild(g);
+  const cp = document.createElementNS('http://www.w3.org/2000/svg','clipPath'); cp.id='cs'+i; const r=document.createElementNS('http://www.w3.org/2000/svg','rect'); r.setAttribute('x', 8+i*268); r.setAttribute('y', 1100); r.setAttribute('width', 260); r.setAttribute('height', 360); r.setAttribute('rx', 18); cp.appendChild(r); document.querySelector('defs').appendChild(cp);
+  const a = S2.side(g, {s: 1.1, lw: 3.6}); a.set({x: 120 + i * 268, y: 2290, face: fc}); mkT(138 + i * 268, 1490, n); });
+// ряд 4: позы — ходьба (две фазы), хват за трубу
+const w1 = S2.side(W, {s: 0.36, lw: 3}); w1.set({x: 150, y: 1900, legN: {foot: [210, 1888]}, legF: {foot: [95, 1888]}, armN: {sh: 18, el: -14}, armF: {sh: -20, el: -20}, face: {mouth: 'smile'}});
+const w2 = S2.side(W, {s: 0.36, lw: 3}); w2.set({x: 400, y: 1900, legN: {foot: [395, 1888]}, legF: {foot: [430, 1840]}, armN: {sh: 0, el: -10}, armF: {sh: 0, el: -10}, face: {mouth: 'smile'}});
+const rod = document.createElementNS('http://www.w3.org/2000/svg','rect'); rod.setAttribute('x', 770); rod.setAttribute('y', 1530); rod.setAttribute('width', 14); rod.setAttribute('height', 380); rod.setAttribute('fill', '#5d6f86'); W.appendChild(rod);
+const g1 = S2.side(W, {s: 0.36, lw: 3}); g1.set({x: 700, y: 1900, lean: -6, armN: {to: [777, 1700]}, armF: {to: [777, 1660]}, handN: 'grip', handF: 'grip', face: {mouth: 'tongue', tongue: 0.6, eye: 'wide'}});
+window.__seek = () => {}; window.__duration = 1; window.__ready = Promise.resolve();
+window.__errs = window.__poseErr;
+</script></body></html>

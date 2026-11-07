@@ -1,0 +1,6 @@
+node_modules/
+.venv/
+output/*
+!output/.gitkeep
+_pframes/
+*.tmp

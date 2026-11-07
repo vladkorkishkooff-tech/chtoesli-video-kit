@@ -1,0 +1,39 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+@font-face{font-family:PF;src:url(fonts/PlayfairDisplay-Bold.ttf)}
+@font-face{font-family:CV;src:url(fonts/Caveat.ttf)}
+html,body{margin:0;background:#000}
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden}
+#stage>*{position:absolute;left:0;top:0}
+#vig{width:1080px;height:1920px;background:radial-gradient(ellipse 78% 64% at 50% 46%, rgba(0,0,0,0) 52%, rgba(12,9,26,.6) 100%)}
+.gr{width:1080px;height:1920px;mix-blend-mode:overlay;opacity:.16}
+</style></head><body><div id="stage">
+<svg id="sv" width="1080" height="1920" viewBox="0 0 1080 1920"><defs></defs><g id="world"></g></svg>
+<div id="vig"></div>
+<svg id="ui" width="1080" height="1920" viewBox="0 0 1080 1920"><defs></defs><g id="uiw"></g></svg>
+<img class="gr" src="tex/grain2_0.png">
+</div>
+<script src="lib/geom2.js"></script><script src="lib/look2.js"></script><script src="lib/yard2.js"></script><script src="lib/sosed2.js"></script><script src="lib/cat2.js"></script>
+<script>
+const {mk} = GEOM2, L2 = LOOK2, Y = YARD2;
+const D = document.querySelector('#sv defs'), W = document.getElementById('world'), UI = document.getElementById('uiw');
+const S2 = SOSED2(), K = CAT2();
+const yard = Y.yardWide(W, D, {lit: {'1_4': true}});
+// кот в окне 2-го этажа (колонка 4)
+const cw = yard.wins.find((w) => w.key === '1_4');
+const catG = mk('g', {}, W); const cat = K.sit(catG, {s: 0.26, lw: 2}); cat.set({x: cw.x + 46, y: cw.y + 102, eye: 'open', look: [-1, 1], tail: 0.2});
+const sw = Y.swing(W, D, {cx: 618, gy: 1660, s: 233, lw: 2.6});
+const hero = S2.side(W, {s: 0.44, lw: 2.8, off: 2});
+hero.set({x: 470, y: 1660, armN: {sh: -40, el: -100}, handN: 'phone', armF: {sh: 4, el: -12}, face: {mouth: 'smirk', look: [0.4, 0.5]}, tilt: 6});
+// снег
+const sn1 = L2.snow(W, {n: 90, seed: 3, size: [1.6, 2.8], speed: [40, 70], sway: 10, opacity: 0.75});
+const sn2 = L2.snow(W, {n: 40, seed: 5, size: [3.5, 5.5], speed: [90, 140], sway: 18, opacity: 0.85});
+sn1.set(3); sn2.set(3);
+// свет
+const amb = mk('rect', {x: 0, y: 0, width: 1080, height: 1920, fill: '#8E95CC', opacity: 0.22, style: 'mix-blend-mode:multiply'}, W);
+L2.glow(W, D, {x: yard.lamp[0], y: yard.lamp[1] + 10, r: 520, ry: 560, color: '#FFB866', op: 0.55});
+L2.glow(W, D, {x: 940, y: 1500, r: 330, ry: 110, color: '#FFC57A', op: 0.45});
+L2.glow(W, D, {x: yard.door[0], y: yard.door[1] + 20, r: 170, color: '#FFC57A', op: 0.6});
+yard.wins.filter((w) => w.lit).forEach((w) => L2.glow(W, D, {x: w.x + 46, y: w.y + 52, r: 95, color: '#FFB060', op: 0.32}));
+window.__seek = () => {}; window.__duration = 1;
+window.__ready = (async () => { await document.fonts.ready; })();
+</script></body></html>

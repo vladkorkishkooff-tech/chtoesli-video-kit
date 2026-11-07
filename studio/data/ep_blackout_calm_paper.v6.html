@@ -1,0 +1,951 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>Что если отключат свет зимой — бумага</title>
+<style>
+  @font-face { font-family: 'Hand'; src: url('fonts/Caveat.ttf'); font-weight: 400 700; }
+  :root { --ink: #1A1A1A; --clay: #C8714B; --olive: #7F8A69; --sky: #7C93B4; --paper: #FCF5EB; --serif: Georgia, serif; }
+  .tex { position: absolute; inset: 0; pointer-events: none; background-size: 1024px 1024px; }
+  html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: var(--paper); }
+  #stage { position: absolute; inset: 0; transform-origin: 50% 50%; }
+  svg { position: absolute; inset: 0; }
+</style>
+<script src="camlife.js"></script><script src="sfx.js"></script><script src="lib/oneline.js"></script><script src="lib/brush.js"></script><script src="lib/inkclay.js"></script><script src="lib/paperhero.js"></script>
+</head><body>
+<div id="stage">
+<svg id="svg" width="1080" height="1920" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="paperPat" width="512" height="512" patternUnits="userSpaceOnUse"><rect width="512" height="512" fill="#FCF5EB"/></pattern>
+    <!-- акварельная заливка предмета: рваный край ≤ 2 px, плотность пигмента пятнами (soft-light: тёмное и светлое меняются соразмерно), тёмная кайма по краю -->
+    <filter id="wash" x="-4%" y="-4%" width="108%" height="108%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="3" seed="5" result="N"/>
+      <feDisplacementMap in="SourceGraphic" in2="N" scale="4" xChannelSelector="R" yChannelSelector="G" result="S"/>
+      <feColorMatrix in="N" type="matrix" values="0 0 .9 0 .05  0 0 .9 0 .05  0 0 .9 0 .05  0 0 0 0 1" result="G"/>
+      <feBlend in="G" in2="S" mode="soft-light" result="M"/>
+      <feComposite in="M" in2="S" operator="in" result="Mi"/>
+      <feGaussianBlur in="S" stdDeviation="2.2" result="Bl"/>
+      <feComposite in="S" in2="Bl" operator="out" result="rim"/>
+      <feColorMatrix in="rim" type="matrix" values=".72 0 0 0 0  0 .72 0 0 0  0 0 .76 0 0  0 0 0 .55 0" result="rimD"/>
+      <feMerge><feMergeNode in="Mi"/><feMergeNode in="rimD"/></feMerge>
+    </filter>
+    <!-- то же без сдвига края и без каймы, пятна слабее — для фигур со своим контуром (шторы, дверь): прямые линии остаются прямыми -->
+    <filter id="washS" x="-4%" y="-4%" width="108%" height="108%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".018" numOctaves="3" seed="5" result="N"/>
+      <feColorMatrix in="N" type="matrix" values="0 0 .5 0 .25  0 0 .5 0 .25  0 0 .5 0 .25  0 0 0 0 1" result="G"/>
+      <feBlend in="G" in2="SourceGraphic" mode="soft-light" result="M"/>
+      <feComposite in="M" in2="SourceGraphic" operator="in"/>
+    </filter>
+    <!-- ткани героя (карандаш по гуаши); паттерны едут вместе с героем -->
+    <pattern id="phHood" width="256" height="256" patternUnits="userSpaceOnUse"><image href="tex/hoodie.png" width="256" height="256"/></pattern>
+    <pattern id="phHoodD" width="256" height="256" patternUnits="userSpaceOnUse"><image href="tex/hoodie_dark.png" width="256" height="256"/></pattern>
+    <pattern id="phJeans" width="256" height="256" patternUnits="userSpaceOnUse"><image href="tex/jeans.png" width="256" height="256"/></pattern>
+    <!-- «Сосед»: светлые кремовые брюки (дальняя штанина темнее) — python3 tools/make_textures.py sosed -->
+    <pattern id="phPants" width="256" height="256" patternUnits="userSpaceOnUse"><image href="tex/pants.png" width="256" height="256"/></pattern>
+    <pattern id="phPantsD" width="256" height="256" patternUnits="userSpaceOnUse"><image href="tex/pants_dark.png" width="256" height="256"/></pattern>
+    <pattern id="phKnit" width="48" height="48" patternUnits="userSpaceOnUse"><image href="tex/knit.png" width="48" height="48"/></pattern>
+    <!-- свет дали: бледная холодная заливка стен уходит кругом от лампы, под ней — тёплая бумага -->
+    <radialGradient id="litGrad"><stop offset="0" stop-color="#000"/><stop offset=".72" stop-color="#000"/><stop offset="1" stop-color="#fff"/></radialGradient>
+    <mask id="litMask" maskUnits="userSpaceOnUse" x="-600" y="-200" width="4600" height="2200"><rect x="-600" y="-200" width="4600" height="2200" fill="#fff"/><circle id="litC" cx="1855" cy="870" r="0" fill="url(#litGrad)"/></mask>
+    <filter id="fibre" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9 .3" numOctaves="3" seed="6"/><feColorMatrix values="0 0 0 0 .42  0 0 0 0 .37  0 0 0 0 .3  0 0 0 .2 0"/></filter>
+    <filter id="inkRough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.5"/></filter>
+    <filter id="clayTex" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="11" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="5" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="9" result="n"/><feColorMatrix in="n" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .32 0" result="g"/>
+      <feComposite in="g" in2="d" operator="in" result="gi"/><feBlend in="d" in2="gi" mode="multiply"/>
+    </filter>
+    <radialGradient id="lampGlow"><stop offset="0" stop-color="#F2C27B" stop-opacity=".6"/><stop offset=".45" stop-color="#F2C27B" stop-opacity=".24"/><stop offset="1" stop-color="#F2C27B" stop-opacity="0"/></radialGradient>
+  </defs>
+  <g id="world"></g>
+</svg>
+</div>
+<svg id="ui" width="1080" height="1920" viewBox="0 0 1080 1920" style="position:absolute;inset:0;pointer-events:none">
+  <defs>
+    <!-- сухая кисть для глиняного маркера: продольные просветы и рваный край, как плашка «5 шагов» на превью -->
+    <filter id="dry" x="-3%" y="-40%" width="106%" height="180%">
+      <feTurbulence type="fractalNoise" baseFrequency=".035 .5" numOctaves="2" seed="8" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.6 2.05" result="holes"/>
+      <feComposite in="SourceGraphic" in2="holes" operator="in" result="m"/>
+      <feTurbulence type="fractalNoise" baseFrequency=".06" numOctaves="2" seed="4" result="w"/>
+      <feDisplacementMap in="m" in2="w" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <!-- финал: ткань штор (терракотовая отмывка) и тени складок -->
+    <pattern id="curtTexL" width="512" height="512" patternUnits="userSpaceOnUse"><image href="tex/curtain.png" width="512" height="512"/></pattern>
+    <pattern id="curtTexR" width="512" height="512" patternUnits="userSpaceOnUse"><image href="tex/curtain.png" width="512" height="512"/></pattern>
+    <pattern id="curtTexP" width="512" height="512" patternUnits="userSpaceOnUse" patternTransform="translate(130 60)"><image href="tex/curtain.png" width="512" height="512"/></pattern>
+    <linearGradient id="curtShL"><stop offset="0" stop-color="#8E4A2C" stop-opacity="0"/><stop offset=".62" stop-color="#8E4A2C" stop-opacity=".2"/><stop offset="1" stop-color="#8E4A2C" stop-opacity=".46"/></linearGradient>
+    <linearGradient id="curtShR"><stop offset="0" stop-color="#8E4A2C" stop-opacity=".46"/><stop offset=".38" stop-color="#8E4A2C" stop-opacity=".2"/><stop offset="1" stop-color="#8E4A2C" stop-opacity="0"/></linearGradient>
+    <linearGradient id="curtHi"><stop offset="0" stop-color="#FCF5EB" stop-opacity="0"/><stop offset=".5" stop-color="#FCF5EB" stop-opacity=".2"/><stop offset="1" stop-color="#FCF5EB" stop-opacity="0"/></linearGradient>
+  </defs>
+  <g id="curt" style="display:none"></g>
+  <path id="pp" fill="#FCF5EB" fill-rule="evenodd"/>
+  <g id="frm"></g>
+  <g id="hdg" font-family="Georgia" font-size="36"></g>
+  <path id="hl" d="M90 232 H990" stroke="#141413" stroke-width="2" fill="none"/>
+  <g id="mk" filter="url(#dry)"></g>
+  <g id="clock" style="display:none">
+    <circle cx="540" cy="384" r="66" fill="#FCF5EB" stroke="#1A1A1A" stroke-width="3.4"/>
+    <g stroke="#1A1A1A" stroke-width="2.6" stroke-linecap="round"><path d="M540 326 V336" transform="rotate(0 540 384)"/><path d="M540 326 V336" transform="rotate(30 540 384)"/><path d="M540 326 V336" transform="rotate(60 540 384)"/><path d="M540 326 V336" transform="rotate(90 540 384)"/><path d="M540 326 V336" transform="rotate(120 540 384)"/><path d="M540 326 V336" transform="rotate(150 540 384)"/><path d="M540 326 V336" transform="rotate(180 540 384)"/><path d="M540 326 V336" transform="rotate(210 540 384)"/><path d="M540 326 V336" transform="rotate(240 540 384)"/><path d="M540 326 V336" transform="rotate(270 540 384)"/><path d="M540 326 V336" transform="rotate(300 540 384)"/><path d="M540 326 V336" transform="rotate(330 540 384)"/></g>
+    <path id="ckH" d="M540 384 V350" stroke="#1A1A1A" stroke-width="5" stroke-linecap="round"/>
+    <path id="ckM" d="M540 384 V334" stroke="#C8714B" stroke-width="3.6" stroke-linecap="round"/>
+    <circle cx="540" cy="384" r="5" fill="#1A1A1A"/>
+    <rect id="ckBg" x="610" y="356" width="10" height="66" rx="12" fill="#FCF5EB" stroke="#1A1A1A" stroke-width="2"/>
+    <text id="ckT" x="624" y="404" font-family="Hand" font-weight="700" font-size="52" fill="#141413">свет погас</text>
+  </g>
+  <g id="icons"><g data-x="150" style="display:none"><circle r="74" fill="#FCF5EB" stroke="#1A1A1A" stroke-width="3"/><path d="M0 -42 C26 -6 32 14 0 38 C-32 14 -26 -6 0 -42 Z" fill="#7C93B4" stroke="#1A1A1A" stroke-width="3"/></g><g data-x="345" style="display:none"><circle r="74" fill="#FCF5EB" stroke="#1A1A1A" stroke-width="3"/><path d="M-22 -16 H22 V20 H-22 Z" fill="#2E3852" stroke="#1A1A1A" stroke-width="3"/><path d="M-10 -16 V-36 M10 -16 V-36 M0 20 C0 36 20 40 30 30" fill="none" stroke="#1A1A1A" stroke-width="3" stroke-linecap="round"/></g><g data-x="540" style="display:none"><circle r="74" fill="#FCF5EB" stroke="#1A1A1A" stroke-width="3"/><path d="M-24 -42 H24 Q32 -42 32 -34 V38 Q32 46 24 46 H-24 Q-32 46 -32 38 V-34 Q-32 -42 -24 -42 Z" fill="#F1ECE2" stroke="#1A1A1A" stroke-width="3"/><path d="M-32 -12 H32 M20 -32 V-22 M20 0 V22" stroke="#1A1A1A" stroke-width="3" stroke-linecap="round"/></g><g data-x="735" style="display:none"><circle r="74" fill="#FCF5EB" stroke="#1A1A1A" stroke-width="3"/><path d="M-16 30 C-28 4 -8 -6 -4 -30 C4 -12 12 -16 10 -36 C34 -10 30 18 16 30 Z" fill="#C8714B" stroke="#1A1A1A" stroke-width="3"/><path d="M-42 -42 L42 42" stroke="#A65A3B" stroke-width="7" stroke-linecap="round"/></g><g data-x="930" style="display:none"><circle r="74" fill="#FCF5EB" stroke="#1A1A1A" stroke-width="3"/><path d="M-36 -18 C-12 -30 12 -6 36 -18 V30 C12 42 -12 18 -36 30 Z" fill="#A65A3B" stroke="#1A1A1A" stroke-width="3"/><path d="M-36 6 C-12 -6 12 18 36 6" fill="none" stroke="#FCF5EB" stroke-width="3"/></g></g>
+  <g id="caps" font-family="Georgia" fill="#141413" text-anchor="middle" font-weight="700"></g>
+</svg>
+<div class="tex" style="background-image:url(tex/paper_mul.png);mix-blend-mode:multiply"></div>
+<div class="tex" style="background-image:url(tex/paper_scr.png);mix-blend-mode:screen"></div>
+<script>
+const {cam, sfx, el, on, EASE, prog, clamp} = E;
+// Вид: по умолчанию — стиль канала (аватарка, шапка): бумага, тушь, терракота и их разбавления, тени — штриховкой; ?look=light — светлый
+const CH = new URLSearchParams(location.search).get('look') !== 'light';
+const TXC = new Set(['sky', 'wall_bath', 'wall_room', 'wall_kit', 'glass_room', 'glass_kit', 'jeans']);
+const TX = (n) => `tex/${n}${CH && TXC.has(n) ? '_chan' : ''}.png`;
+if (CH) { document.querySelector('#phJeans image').setAttribute('href', TX('jeans'));
+  document.querySelectorAll('#lampGlow stop').forEach((n) => n.setAttribute('stop-color', '#EDB48A')); }
+// текстуры — до первого кадра (рендер ждёт window.__ready)
+window.__ready = Promise.all(['paper_mul', 'paper_scr', 'sky', 'wall_bath', 'wall_room', 'wall_kit', 'glass_room', 'glass_kit', 'hoodie', 'hoodie_dark', 'jeans', 'pants', 'pants_dark', 'knit', 'curtain', 'logo_chtoesli', 'plaque_logo']
+  .map((n) => { const im = new Image(); im.src = TX(n); return im.decode().catch(() => console.warn('нет текстуры', n)); })).then(() => document.fonts.ready);
+const load = (u) => { const x = new XMLHttpRequest(); x.open('GET', u, false); x.send(); return JSON.parse(x.responseText); };
+const TL = load('data/blackout_calm.timings.json'), WD = load('data/blackout_calm.words.json');
+const T = Object.fromEntries(TL.map((s) => [s.id, s.start]));
+const norm = (w) => w.toLowerCase().replace(/[.,:;!?—«»]/g, '').replace(/ё/g, 'е');
+/** Время слова диктора в сцене (первое совпадение из вариантов); нет — начало сцены. */
+const W = (scene, ...words) => { const c = words.map(norm), hit = (WD[scene] || []).find((w) => c.includes(norm(w[0]))); if (!hit) console.warn('нет слова', scene, words); return hit ? hit[1] : T[scene]; };
+const END = TL[TL.length - 1].start + TL[TL.length - 1].dur, DUR = END + 2.0;   // хвост — закрытые шторы и табличка канала
+E.init({dur: DUR});
+// Палитра превью канала: тушь, глина, серо-синий, кремовая бумага; остальное — их разбавления. Сцена светлая: всё читается
+const B = BRUSH(E), K = INKCLAY(E, B, {inkK: 0.55, sketch: 0.4, sketchMin: 2.2, wash: 'url(#wash)', bleed: true, card: {fill: '#FCF5EB', stroke: '#1A1A1A', w: 2.6, rx: 10},
+  safe: {l: 112, r: 968, t: 318, b: 1380}}), PH = PAPERHERO(E);   // пометки с карточкой целиком внутри панели
+const INK = '#1A1A1A', CLAY = CH ? '#CF7F55' : '#C8714B', CLAY2 = CH ? '#B0603C' : '#A65A3B', SKIN = '#DDBD9E', SKY = CH ? '#B9B2A7' : '#7C93B4', SKY2 = CH ? '#8C857B' : '#5D7396',
+  OLIVE = CH ? '#A39C91' : '#7F8A69', SAND = CH ? '#F0C49A' : '#E8C27A', NIGHT = '#17284A', PAPER = '#FCF5EB';
+const WOOD = CH ? '#DDB08F' : '#A48E70', SLAB = '#E6E0D2', WHITE = CH ? '#F8F1E6' : '#F3EEE4', DARK = CH ? '#3B3734' : '#252A38', STEEL = CH ? '#CFC8BD' : '#BFC1C2',
+  CURT = CH ? '#E6C4A6' : '#B7A487', GLASS = CH ? '#E6E0D6' : '#D5DCE2', SOFA = CH ? '#A09990' : '#6F7C9A', SOFA2 = CH ? '#B8B1A7' : '#8794B0';
+const LAMPL = CH ? '#F7D6B4' : '#FBE9BC', FACADE = CH ? '#D48B63' : '#D9AD8F', WIN0 = CH ? '#A39C92' : '#8E9BAA', SHADE0 = CH ? '#EFE6D8' : '#E2DACB', SHADE1 = CH ? '#F6CFA6' : '#F4D49A';
+const WATER = CH ? '#93C4E4' : SKY, WATER2 = CH ? '#5E98C6' : SKY2, WATERHI = '#EEF7FC';   // вода — естественно-голубая (светлый вид — как был)
+if (CH) ui0('icons').querySelectorAll('[fill]').forEach((n) => { const v = n.getAttribute('fill'); if (v === '#7C93B4') n.setAttribute('fill', WATER); if (v === '#2E3852') n.setAttribute('fill', DARK); if (v === '#C8714B') n.setAttribute('fill', CLAY); });
+function ui0(id) { return document.getElementById(id); }
+const R = (x, y, w, h, r = 0) => r ? `M${x + r} ${y}H${x + w - r}Q${x + w} ${y} ${x + w} ${y + r}V${y + h - r}Q${x + w} ${y + h} ${x + w - r} ${y + h}H${x + r}Q${x} ${y + h} ${x} ${y + h - r}V${y + r}Q${x} ${y} ${x + r} ${y}Z` : `M${x} ${y}H${x + w}V${y + h}H${x}Z`;
+const O = (cx, cy, rx, ry = rx) => `M${cx - rx} ${cy}a${rx} ${ry} 0 1 0 ${2 * rx} 0a${rx} ${ry} 0 1 0 ${-2 * rx} 0`;
+const {ink, clay, hatch, note} = K;
+const lerp = (a, b, u) => a + (b - a) * u, F1 = (v) => v.toFixed(1);
+const show = (n, v) => { n.style.display = v ? '' : 'none'; };
+
+// ══ Экранный слой: шапка шага и подпись с маркером на сцену (как в «Ночи») ══
+const ui = (id) => document.getElementById(id);
+const UB = BRUSH({...E, lineLayer: ui('mk'), defs: ui('ui').querySelector('defs'), on: (f) => E.on(f)});
+const HEAD = [[0, null, 'свет отключат зимой'], [T.s03, 'ШАГ 1 ИЗ 5', 'вода'], [T.s04, 'ШАГ 2 ИЗ 5', 'розетки'], [T.s05, 'ШАГ 3 ИЗ 5', 'еда'], [T.s06, 'ШАГ 4 ИЗ 5', 'плита'], [T.s07, 'ШАГ 5 ИЗ 5', 'тепло'], [T.s08, null, 'свет дали']];   // null — логотип канала
+const heads = HEAD.map(([t0, a, b], i) => {
+  const g = el('g', {}, ui('hdg'));
+  if (a) el('text', {x: 90, y: 200, fill: INK, opacity: 0.85, 'letter-spacing': 7}, g).textContent = a;
+  else el('image', {href: TX('logo_chtoesli'), x: 84, y: 62, width: 439, height: 158}, g);   // логотип владельца: «Что если?» / «знай, что делать»
+  el('text', {x: 990, y: 200, 'text-anchor': 'end', 'font-style': 'italic', fill: INK}, g).textContent = b;
+  return {g, t0, t1: (HEAD[i + 1] || [DUR + 1])[0]};
+});
+{ // значки шагов в шапке: текущий — крупнее, в терракотовом кольце; пройденные — с галочкой; будущие — бледные
+  const ST = [T.s03, T.s04, T.s05, T.s06, T.s07, T.s08], G = el('g', {}, ui('hdg')), Y0 = 187, X = (i) => 600 + (i - 2) * 62;
+  el('path', {d: `M${X(0)} ${Y0} H${X(4)}`, stroke: INK, 'stroke-width': 2, 'stroke-dasharray': '2 7', 'stroke-linecap': 'round', opacity: 0.45}, G);
+  const ic = [...ui0('icons').children].map((src, i) => {
+    const g = el('g', {}, G), c = src.cloneNode(true); c.removeAttribute('style'); c.removeAttribute('data-x'); g.appendChild(c);
+    c.querySelectorAll('[stroke-width]').forEach((n) => n.setAttribute('stroke-width', +n.getAttribute('stroke-width') * 3));
+    const ring = el('circle', {r: 96, fill: 'none', stroke: CLAY, 'stroke-width': 16}, g);
+    const tick = el('path', {d: 'M-34 4 L-8 30 L40 -30', fill: 'none', stroke: CLAY2, 'stroke-width': 22, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', pathLength: 1, 'stroke-dasharray': '1 1'}, g);
+    return {g, c, ring, tick, t0: ST[i], t1: ST[i + 1]};
+  });
+  on((t) => {
+    const a = EASE.o(prog(t, ST[0], ST[0] + 0.3)) * (1 - EASE.io2(prog(t, ST[5] - 0.2, ST[5]))); G.style.opacity = a; show(G, a > 0.001); if (a <= 0.001) return;
+    ic.forEach((s, i) => {
+      const cur = t >= s.t0 && t < s.t1, past = t >= s.t1, pop = EASE.back(clamp(prog(t, s.t0, s.t0 + 0.35))), done = EASE.io2(prog(t, s.t1, s.t1 + 0.3));
+      const k = 0.25 + 0.07 * (cur ? pop : past ? 1 - done : 0);
+      s.g.setAttribute('transform', `translate(${X(i)} ${Y0}) scale(${k.toFixed(3)})`);
+      s.c.style.opacity = cur ? 1 : past ? 1 - 0.5 * done : 0.32;
+      show(s.ring, cur); s.ring.style.opacity = F1(pop);
+      show(s.tick, past); s.tick.style.strokeDashoffset = (1 - done).toFixed(3);
+    });
+  });
+}
+const CAPS = {s01: ['Что если отключат свет —', 'и не скажут, на сколько?'], s02: ['Час или пара суток —', 'пять спокойных шагов'], s03: ['Сначала —', 'набери воды'],
+  s04: ['Технику — из розеток,', 'одну лампу оставь'], s05: ['Ешь сначала', 'из холодильника'], s06: ['Плитой не греться:', 'угарный газ не видно'],
+  s07: ['Тепло —', 'в одной комнате'], s08: ['Скорее всего, свет дадут', 'раньше. Тем лучше'], s09: ['Сохрани —', 'и пусть не пригодится']};
+const caps = TL.map((s) => {
+  const [a, b] = CAPS[s.id], g = el('g', {}, ui('caps'));
+  const c1 = el('text', {x: 540, y: 1508, 'font-size': Math.min(40, Math.round(800 / (a.length * 0.58)))}, g); c1.textContent = a;
+  const big = Math.min(50, Math.round(800 / (b.length * 0.6)));
+  const c2 = el('text', {x: 540, y: 1608, 'font-size': big, 'font-style': 'italic'}, g); c2.textContent = b;
+  const t0 = s.start, t1 = s === TL[TL.length - 1] ? DUR + 1 : s.start + s.dur, w = Math.min(900, b.length * big * 0.58 + 60);   // последняя — до конца, под шторами
+  UB.stroke(`M${540 - w / 2} 1590 C${540 - w / 4} 1586 ${540 + w / 4} 1589 ${540 + w / 2} 1582`, t0 + 0.25, t0 + 0.55, {w: 34, color: 'rgba(200,113,75,0.7)', taper: [0.03, 0.06], until: t1 - 0.02, fade: (t) => 1 - EASE.io2(prog(t, t1 - 0.18, t1))});
+  return {g, c1, c2, t0, t1};
+});
+on((t) => {
+  heads.forEach((h) => { const a = EASE.o(prog(t, h.t0, h.t0 + 0.3)) * (1 - EASE.io2(prog(t, h.t1 - 0.2, h.t1))); h.g.style.opacity = a; show(h.g, a > 0.001); });
+  const hl = ui('hl'), L = hl.__L || (hl.__L = hl.getTotalLength()); hl.style.strokeDasharray = L; hl.style.strokeDashoffset = L * (1 - EASE.io2(prog(t, 0.05, 0.6)));
+  caps.forEach((c) => {
+    const vis = t >= c.t0 && t <= c.t1; show(c.g, vis); if (!vis) return;
+    const out = 1 - EASE.io2(prog(t, c.t1 - 0.18, c.t1));
+    const q1 = EASE.o(prog(t, c.t0, c.t0 + 0.3)); c.c1.style.opacity = q1 * out; c.c1.setAttribute('transform', `translate(0 ${((1 - q1) * 26).toFixed(1)})`);
+    const q2 = clamp(prog(t, c.t0 + 0.42, c.t0 + 0.75)), k2 = EASE.back(q2); c.c2.style.opacity = Math.min(1, q2 * 3) * out;
+    c.c2.setAttribute('transform', `translate(540 1594) scale(${(1.3 - 0.3 * k2).toFixed(3)}) translate(-540 -1625)`);
+  });
+});
+
+// ══ Лист: сцена — акварельная панель на бумаге в тонкой рамке тушью (как на превью канала) ══
+const PAN = {x0: 56, y0: 272, x1: 1024, y1: 1430};   // рамка тушью
+{
+  // край заливки не доходит до рамки на 6–14 px (полоска бумаги между акварелью и линией) — рисунок не вылезает за рамку
+  const H0 = {x0: 68, y0: 283, x1: 1013, y1: 1419};
+  const hsh = (i, k) => { const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); };
+  const wob = (q, k) => 4 * Math.sin(q * 0.011 + k) + 2.2 * Math.sin(q * 0.037 + k * 2.1) + 0.9 * Math.sin(q * 0.11 + k * 3.7) + (hsh(Math.floor(q / 9), k) - 0.5) * 1.1;
+  const pts = [], side = (ax, ay, bx, by, nx, ny, k) => { const L = Math.hypot(bx - ax, by - ay); for (let q = 0; q < L; q += 6) { const u = q / L, o = wob(q, k); pts.push([ax + (bx - ax) * u + nx * o, ay + (by - ay) * u + ny * o]); } };
+  side(H0.x0, H0.y0, H0.x1, H0.y0, 0, -1, 1); side(H0.x1, H0.y0, H0.x1, H0.y1, 1, 0, 2); side(H0.x1, H0.y1, H0.x0, H0.y1, 0, 1, 3); side(H0.x0, H0.y1, H0.x0, H0.y0, -1, 0, 4);
+  ui('pp').setAttribute('d', 'M-20 -20H1100V1940H-20Z M' + pts.map((q) => F1(q[0]) + ' ' + F1(q[1])).join('L') + 'Z');
+  const UF = BRUSH({...E, lineLayer: ui('frm'), defs: ui('ui').querySelector('defs'), on: (f) => E.on(f)});
+  const {x0, y0, x1, y1} = PAN, fo = {w: 3.4, color: INK, taper: [0.03, 0.05]};
+  UF.stroke(`M${x0 - 12} ${y0 + 1} L${x1 + 9} ${y0 - 1}`, 0.02, 0.32, fo);
+  UF.stroke(`M${x1 + 1} ${y0 - 13} L${x1 - 1} ${y1 + 10}`, 0.2, 0.55, fo);
+  UF.stroke(`M${x1 + 11} ${y1} L${x0 - 9} ${y1 + 2}`, 0.42, 0.72, fo);
+  UF.stroke(`M${x0 + 1} ${y1 + 12} L${x0 - 1} ${y0 - 10}`, 0.6, 0.9, fo);
+  UF.stroke(`M${x1 + 6} ${y0 + 46} L${x1 + 5} ${y0 + 560}`, 0.8, 1.0, {w: 2.2, color: INK, taper: [0.2, 0.3]}); // второй проход справа, как на превью
+}
+
+// ══ Опорные моменты — слова диктора ══
+const t2 = T.s02, t3 = T.s03, t4 = T.s04, t5 = T.s05, t6 = T.s06, t7 = T.s07, t8 = T.s08, t9 = T.s09;
+const wSv1 = W('s01', 'свет,', 'свет');
+const wChas = W('s02', 'час,', 'час'), wPar = W('s02', 'пару'), w5 = W('s02', '5', 'пять'), wVar = W('s02', 'вариант.', 'вариант');
+const wNab = W('s03', 'Набери'), wBut = W('s03', 'бутылки'), wNas = W('s03', 'Насосы'), wNap = W('s03', 'напор');
+const wVyd = W('s04', 'Выдерни'), wRoz = W('s04', 'розеток'), wSka = W('s04', 'качком', 'скачком'), wOdn = W('s04', 'Одну'), wOst = W('s04', 'оставь'), wDal = W('s04', 'дали');
+const wHol = W('s05', 'холодильнике'), wChe = W('s05', 'четыре'), wOtk = W('s05', 'открывать'), wMor = W('s05', 'Морозилка'), wKon = W('s05', 'Консервы');
+const wPro = W('s06', 'прохладнее'), wGaz = W('s06', 'Газовую'), wNe = W('s06', 'включай'), wUg = W('s06', 'газ'), wSon = W('s06', 'сне');
+const wZak = W('s07', 'Закрой'), wShch = W('s07', 'щель'), wZat = W('s07', 'заткни'), wOkno = W('s07', 'окно'), wSvi = W('s07', 'святера', 'свитера'), wOde = W('s07', 'одеяло', 'одеяла'), wChai = W('s07', 'горячий');
+const wSvet = W('s08', 'свет'), wLuch = W('s08', 'лучше');
+const POWER2 = wSvet + 0.05;
+// «свет дали»: короткий план дома — окна загораются волной (наоборот к началу), затем камера спускается в квартиру
+const H2_IN = wSvet - 0.2, H2_PAN0 = wSvet + 1.02, H2_PAN1 = wSvet + 2.02, LIT1 = H2_PAN1 - 0.55;
+
+// ══ Сборка вещей: туша контуром, глина — чуть со сдвигом (≤ 4 px), по одной детали ══
+const fades = [];
+/** Крупная заливка без «пружины» — просто проявляется (стены, перекрытия). */
+function fillIn(sc, d, t0, color, o = {}) { const p = el('path', {d, fill: color, opacity: 0}, o.parent || sc.clay); fades.push({p, t0, dur: o.dur || 0.35}); return p; }
+on((t) => fades.forEach((f) => { const a = EASE.o(prog(t, f.t0, f.t0 + f.dur)); f.p.style.opacity = a; show(f.p, a > 0.001); }));
+/** Разрез перекрытия/стены: штриховка тушью под 45°, проявляется слева направо. */
+let SHN = 0;
+function secHatch(x, y, w, h, t0, dur = 0.6) {
+  let d = '';
+  for (let k = -h; k < w; k += 15) { let ax = x + k, ay = y + h, bx = x + k + h, by = y; if (ax < x) { ay -= x - ax; ax = x; } if (bx > x + w) { by += bx - (x + w); bx = x + w; } if (bx > ax) d += `M${F1(ax)} ${F1(ay)}L${F1(bx)} ${F1(by)}`; }
+  const id = 'sh' + (++SHN), cp = el('clipPath', {id}, E.defs), r = el('rect', {x, y: y - 4, width: 0, height: h + 8}, cp);
+  const p = el('path', {d, fill: 'none', stroke: INK, 'stroke-width': 1.5, 'stroke-linecap': 'round', opacity: 0.4, 'clip-path': `url(#${id})`}, flat.ink);
+  on((t) => { const q = EASE.io2(prog(t, t0, t0 + dur)); r.setAttribute('width', F1(w * q)); show(p, q > 0); });
+}
+/** Предмет из деталей [d, цвет|null, толщина туши]; детали рисуются по очереди. */
+function thing(sc, t0, parts, o = {}) {
+  let t = t0;
+  for (const [d, color, w = 5, dur = 0.22] of parts) { if (color) { const s = clay(sc, d, t + 0.06, color, o.dx ?? 4, o.dy ?? 3); if (o.evenodd) s.p.setAttribute('fill-rule', 'evenodd'); } if (w) ink(sc, d, t, dur, w, o.color ? {color: o.color} : {}); t += o.step ?? 0.07; }
+  return t;
+}
+/** Динамический элемент, проявляется к t0. */
+var appear = (n, t0, d = 0.3) => on((t) => { const a = EASE.o(prog(t, t0, t0 + d)); n.style.opacity = a; show(n, a > 0.001); });
+
+// ══ A. Дом гаснет (s01): окна гаснут волной на «свет», наше — последним ══
+{
+  const Y = -1500, sc = K.place(Y, 0, DUR + 1);   // виден в начале и снова на «свет дали» (s08); между — скрыт
+  on((t) => { if (t > t2 + 1.25 && t < H2_IN - 0.02) for (const g of [sc.clay, sc.ink, sc.top]) g.style.display = 'none'; });
+  el('image', {href: TX('sky'), x: -130, y: 70, width: 1340, height: 1240, preserveAspectRatio: 'none'}, sc.clay); // зимнее небо — светлая акварель шире кадра
+  clay(sc, R(300, 440, 480, 810), -0.4, FACADE, 0, 0);   // фасад — светлая глина
+  { let dw = ''; for (let r = 0; r < 9; r++) for (let c = 0; c < 5; c++) dw += R(330 + c * 92, 470 + r * 78, 56, 50, 4);
+    clay(sc, dw, 0.1, WIN0, 0, 0); }                     // стекло без света — серо-синее (одной заливкой)
+  clay(sc, O(830, 430, 44), -0.35, PAPER, 0, 0);
+  ink(sc, O(830, 430, 44), -0.3, 0.25, 4);
+  note(sc, 160, 500, '−20°', 0.45, {size: 84, until: t2 + 0.3});
+  const snow = el('g', {}, sc.top);
+  for (let i = 0; i < 40; i++) el('circle', {cx: 130 + ((i * 113) % 820), cy: 340 + ((i * 71) % 900), r: 2.5 + (i % 3), fill: PAPER, opacity: 0.85}, snow);
+  on((t) => [...snow.children].forEach((c, i) => c.setAttribute('transform', `translate(${(Math.sin(t + i) * 6).toFixed(1)} ${(((t * 45 + i * 13) % 90) - 45).toFixed(1)})`)));
+  ink(sc, 'M300 1250 V440 H780 V1250', 0.0, 0.6, 8);
+  ink(sc, 'M280 440 H800', 0.4, 0.3, 5);
+  for (let r = 0; r < 9; r++) for (let c = 0; c < 5; c++) {
+    const x = 330 + c * 92, y = 470 + r * 78, d = R(x, y, 56, 50, 4), me = r === 6 && c === 2;
+    const off = me ? wSv1 + 1.3 : wSv1 + 0.05 + r * 0.085 + c * 0.02;
+    clay(sc, d, 0.1 + (r * 5 + c) * 0.006, SAND, 0, 0, {out: off});
+    ink(sc, d, 0.15 + (r * 5 + c) * 0.006, 0.18, 3);
+    if (me) hatch(sc, d, off + 0.05, off + 0.35, {angle: -40, gap: 8, w: 2.2, until: POWER2});
+    clay(sc, d, me ? POWER2 - 0.02 : POWER2 + 0.24 + (8 - r) * 0.07 + c * 0.018, SAND, 0, 0);   // свет дали: наше — первым, потом волной снизу вверх
+  }
+  sfx(wSv1 + 1.3, 'file:foley/switch_click.wav', {gain: 1});
+  sfx(POWER2 - 0.02, 'file:foley/switch_click.wav', {gain: 1});
+  sfx(0, 'file:foley/hum_cut.wav', {gain: 0.8});   // гул сети — обрывается, когда гаснет наше окно
+  sfx(0, 'file:foley/wind.wav', {gain: 0.7});      // ветер: во дворе громко, в квартире еле слышно, за шторами ещё тише
+  ink(sc, 'M80 1250 H1000', 0.3, 0.4, 4);
+  hatch(sc, 'M80 1252 H1000 V1300 H80 Z', 0.5, 0.9, {angle: -40, gap: 10, w: 2});
+  ink(sc, 'M110 1250 C170 1222 240 1226 300 1250 M780 1250 C840 1220 920 1226 980 1250', 0.6, 0.3, 4);
+  // двор: два фонаря по краям (гаснут вместе с окнами), качели и горка в снегу
+  [[112, 1, wSv1 + 0.3], [968, -1, wSv1 + 0.55]].forEach(([x, s, off], i) => {
+    const hx = x + s * 50, ti = 0.22 + i * 0.08, dome = `M${hx - 24} 966 Q${hx} 936 ${hx + 24} 966 Z`;
+    clay(sc, `M${hx - 15} 970 L${hx + 15} 970 L${hx + 84} 1250 L${hx - 84} 1250 Z`, ti + 0.35, LAMPL, 0, 0, {op: 0.55, out: off});   // конус света на снег
+    clay(sc, O(hx, 1252, 92, 12), ti + 0.4, LAMPL, 0, 0, {op: 0.8, out: off});
+    clay(sc, dome, ti + 0.2, WIN0, 0, 0); clay(sc, dome, ti + 0.25, SAND, 0, 0, {out: off});
+    clay(sc, O(hx, 968, 19, 5), ti + 0.3, SAND, 0, 0, {out: off});
+    { const on2 = POWER2 + 0.8 + i * 0.12;
+      clay(sc, `M${hx - 15} 970 L${hx + 15} 970 L${hx + 84} 1250 L${hx - 84} 1250 Z`, on2, LAMPL, 0, 0, {op: 0.55}); clay(sc, O(hx, 1252, 92, 12), on2 + 0.05, LAMPL, 0, 0, {op: 0.8});
+      clay(sc, dome, on2, SAND, 0, 0); clay(sc, O(hx, 968, 19, 5), on2, SAND, 0, 0); }
+    ink(sc, `M${x} 1250 V968 Q${x} 940 ${x + s * 28} 940 H${hx}`, ti, 0.45, 6);           // столб с кронштейном
+    ink(sc, `M${x - 11} 1250 L${x - 7} 1206 H${x + 7} L${x + 11} 1250`, ti + 0.1, 0.2, 4);  // основание
+    ink(sc, dome, ti + 0.3, 0.2, 4);
+  });
+  // качели: две А-стойки, перекладина со снегом, сиденье на цепях
+  clay(sc, R(203, 1216, 54, 9, 3), 0.62, CLAY, 0, 0);
+  ink(sc, 'M168 1250 L184 1150 L200 1250 M262 1250 L278 1150 L294 1250 M184 1150 H278', 0.45, 0.35, 5);
+  ink(sc, 'M212 1152 V1216 M248 1152 V1216', 0.62, 0.2, 3);
+  ink(sc, R(203, 1216, 54, 9, 3), 0.66, 0.15, 3.5);
+  clay(sc, 'M180 1150 Q196 1136 226 1141 Q258 1135 282 1150 Z', 0.8, PAPER, 0, 0); ink(sc, 'M180 1150 Q196 1136 226 1141 Q258 1135 282 1150', 0.8, 0.15, 3);
+  // горка: лесенка, площадка, скат
+  clay(sc, 'M846 1158 H862 Q884 1158 896 1186 Q910 1226 940 1236 V1248 Q900 1246 884 1204 Q872 1172 856 1172 H846 Z', 0.6, CLAY, 0, 0);
+  ink(sc, 'M806 1250 L826 1158 M824 1250 L842 1166 M846 1158 H862 Q884 1158 896 1186 Q910 1226 940 1236 V1248 Q900 1246 884 1204 Q872 1172 856 1172 H846 Z', 0.5, 0.35, 5);
+  ink(sc, 'M811 1228 H829 M815 1206 H833 M820 1184 H838', 0.66, 0.15, 3);
+  clay(sc, 'M842 1158 Q852 1148 864 1158 Z', 0.82, PAPER, 0, 0); ink(sc, 'M842 1158 Q852 1148 864 1158', 0.82, 0.12, 3);
+  // у подъезда: дверь, козырёк, фонарь под ним (гаснет с нашим подъездом), снеговик и лавочка со снегом
+  { const door = R(496, 1180, 88, 70, 3), gl = R(504, 1190, 28, 22, 2) + R(548, 1190, 28, 22, 2), lamp = 'M529 1170 H551 L547 1178 H533 Z';
+    clay(sc, door, 0.42, WOOD, 0, 0); clay(sc, gl, 0.46, WIN0, 0, 0);                                   // двустворчатая дверь со стёклами
+    ink(sc, door + 'M540 1180 V1250' + gl + 'M534 1222 V1234 M546 1222 V1234', 0.42, 0.3, 4);
+    ink(sc, 'M484 1250 V1244 H596 V1250', 0.5, 0.15, 3);                                                // ступенька
+    clay(sc, R(462, 1158, 156, 12, 3), 0.4, SHADE0, 0, 0); ink(sc, R(462, 1158, 156, 12, 3), 0.4, 0.25, 4);   // козырёк
+    clay(sc, 'M464 1158 Q490 1146 524 1151 Q566 1145 616 1158 Z', 0.8, PAPER, 0, 0); ink(sc, 'M464 1158 Q490 1146 524 1151 Q566 1145 616 1158', 0.8, 0.15, 3);
+    clay(sc, lamp, 0.5, WIN0, 0, 0); clay(sc, lamp, 0.52, SAND, 0, 0, {out: wSv1 + 0.95}); ink(sc, lamp, 0.52, 0.12, 3);   // фонарь под козырьком
+    clay(sc, O(540, 1206, 60, 30), 0.55, LAMPL, 0, 0, {op: 0.45, out: wSv1 + 0.95});
+    clay(sc, O(540, 1252, 78, 9), 0.55, LAMPL, 0, 0, {op: 0.75, out: wSv1 + 0.95});
+    clay(sc, lamp, POWER2 + 0.6, SAND, 0, 0); clay(sc, O(540, 1206, 60, 30), POWER2 + 0.62, LAMPL, 0, 0, {op: 0.45}); clay(sc, O(540, 1252, 78, 9), POWER2 + 0.62, LAMPL, 0, 0, {op: 0.75});
+    // сосульки: под козырьком (мимо фонаря) и по карнизу крыши
+    const ice = (x, y, len, w = 4) => `M${x - w} ${y} L${x + 0.6} ${y + len} L${x + w} ${y} Z`;
+    const ICE = CH ? '#EEF4F5' : '#EEF7FC';
+    let ic1 = ''; [[469, 12], [482, 21], [496, 10], [510, 17], [568, 15], [583, 24], [597, 11], [610, 18]].forEach(([x, l]) => { ic1 += ice(x, 1171, l); });
+    let ic2 = ''; [[300, 14], [334, 26], [371, 12], [409, 20], [452, 30], [497, 13], [541, 22], [588, 11], [630, 27], [674, 15], [716, 21], [762, 12]].forEach(([x, l]) => { ic2 += ice(x, 444, l, 5); });
+    clay(sc, ic1, 0.95, ICE, 0, 0); ink(sc, ic1, 0.92, 0.3, 2.6);
+    clay(sc, ic2, 0.75, ICE, 0, 0); ink(sc, ic2, 0.72, 0.4, 2.6);
+    // следы по снегу — от края двора к двери (дальние меньше)
+    const fpAt = (u) => [322 + 204 * u + Math.sin(u * Math.PI) * 10, 1295 - 38 * u];
+    { let up = '', dn = ''; for (let k = 0; k <= 12; k++) { const u = k / 12, [x, y] = fpAt(u), w = 17 - 7 * u; up += (k ? 'L' : 'M') + F1(x) + ' ' + F1(y - w * 0.45); dn = 'L' + F1(x) + ' ' + F1(y + w * 0.45) + dn; }
+      clay(sc, up + dn + 'Z', 0.96, PAPER, 0, 0); }   // протоптанная тропинка
+    let fp = ''; for (let k = 0; k < 11; k++) { const u = k / 10, [x, y] = fpAt(u), sd = k % 2 ? 1 : -1;
+      fp += O(x + sd * 4.5, y + sd * 3, 9 - 3.2 * u, 3.8 - 1.3 * u); }
+    clay(sc, fp, 1.0, SKY2, 0, 0); }
+  clay(sc, O(366, 1226, 24) + O(366, 1190, 17) + O(366, 1163, 12), 0.55, PAPER, 0, 0);
+  ink(sc, O(366, 1226, 24) + O(366, 1190, 17) + O(366, 1163, 12), 0.55, 0.3, 4);
+  clay(sc, 'M373 1164 L392 1168 L373 1170 Z', 0.82, CLAY, 0, 0);
+  ink(sc, O(362, 1159, 1.5) + O(371, 1159, 1.5) + 'M352 1186 L330 1172 M336 1176 L330 1168 M380 1186 L402 1174 M396 1177 L403 1170', 0.82, 0.2, 3);
+  ink(sc, 'M356 1152 H377 M359 1152 V1142 H374 V1152', 0.86, 0.12, 3.5);   // ведро на голове
+  clay(sc, R(646, 1206, 100, 8, 2) + R(646, 1186, 100, 7, 2), 0.6, WOOD, 0, 0);
+  ink(sc, R(646, 1206, 100, 8, 2) + R(646, 1186, 100, 7, 2) + 'M656 1214 V1250 M736 1214 V1250 M652 1193 V1206 M740 1193 V1206', 0.6, 0.3, 4);
+  clay(sc, 'M648 1206 Q670 1196 700 1200 Q728 1194 744 1206 Z', 0.84, PAPER, 0, 0); ink(sc, 'M648 1206 Q670 1196 700 1200 Q728 1194 744 1206', 0.84, 0.12, 3);
+  if (CH) hatch(sc, R(752, 446, 26, 800), 0.6, 0.95, {angle: -40, gap: 9, w: 1.8});   // тень фасада штриховкой
+  // выноска: от нашего окна вниз — в разрез квартиры
+  ink(sc, O(542, 963, 46), wSv1 + 1.6, 0.3, 5, {color: CLAY, until: t2 + 1.25});   // переходы s01 — только в начале
+  ink(sc, 'M548 1010 C 600 1420 1480 1330 1610 1786', 2.95, 0.95, 6, {ease: 'io2', until: t2 + 1.25});
+  cam(0, 540, Y + 860, 1.0);
+  cam(2.85, 540, Y + 880, 1.06);
+  cam(3.95, 1620, 880, 1.0, {ease: 'io'});
+}
+
+// ══ Квартира в разрезе: ванная 0–1080, комната 1080–2160, кухня 2160–3240 ══
+const FL = 1250, CE = 340;
+const flat = K.place(0, t2 - 1.0, DUR + 1);
+const wallL = el('g', {}, flat.clay);   // без света: бледная холодная отмывка на стенах; на «свет» уходит кругом от лампы
+const backL = el('g', {}, flat.clay);   // вода, свет лампы — под заливками вещей
+const dynL = el('g', {}, flat.top), heroL = el('g', {}, flat.top), itemL = el('g', {}, flat.top), noteL = el('g', {}, flat.top);
+// герой «Сосед» (ref/character_sheet_sosed.png): маленькая голова с хохолком и ухом, опущенный капюшон-воротник, терракотовое худи
+// с градиентом и карманом, кремовые брюки, тёмные округлые ботинки; ткань — карандашная текстура, едет вместе с ним. Скелет прежний
+const you = PH.person(heroL, {h: 560, style: 'sosed', top: 'url(#phHood)', top2: 'url(#phHoodD)', jeans: 'url(#phPants)', jeans2: 'url(#phPantsD)', sweater: 'url(#phKnit)', skin: SKIN, skin2: '#CBA486', shoe: '#302E2D', hair: '#2E2925', seed: 1, blink: 1,
+  anchor: ['phHood', 'phHoodD', 'phPants', 'phPantsD', 'phKnit'].map((id) => document.getElementById(id))});
+const LEGR = 560 * 0.04 + 5, SEAT = Math.round(FL + you.probe('sit', 1).hip[1] + LEGR); // сиденье — ровно под бёдрами позы sit
+{
+  const t0 = t2 - 0.3;
+  secHatch(-80, FL, 3400, 56, t0, 0.8); secHatch(-80, CE - 56, 3400, 56, t0 + 0.05, 0.8);
+  ink(flat, `M-80 ${FL} H3320`, t0, 0.8, 7); ink(flat, `M-80 ${FL + 56} H3320`, t0 + 0.15, 0.8, 4);
+  ink(flat, `M-80 ${CE} H3320`, t0 + 0.05, 0.8, 6); ink(flat, `M-80 ${CE - 56} H3320`, t0 + 0.2, 0.8, 4);
+  const wall = (x, t, door) => { const top = door ? 600 : FL; secHatch(x - 15, CE, 30, top - CE, t, 0.4); ink(flat, `M${x - 15} ${CE} V${top} M${x + 15} ${CE} V${top}` + (door ? ` M${x - 15} ${top} H${x + 15}` : ''), t, 0.5, 5); };
+  wall(0, t0 + 0.3); wall(1080, t0 + 0.4, true); wall(2160, t0 + 0.5, true); wall(3240, t0 + 0.6);
+  // стены без света: три комнаты, у каждой своя бледная акварельная отмывка с рваным краем, проступает за 0,6 с
+  [['wall_bath', 15], ['wall_room', 1095], ['wall_kit', 2175]].forEach(([n, x0], i) => {
+    const im = el('image', {href: TX(n), x: x0 - 34, y: CE - 34, width: 1118, height: 978, preserveAspectRatio: 'none'}, wallL);
+    appear(im, t0 + 0.2 + i * 0.1, 0.6);
+  });
+}
+
+// ── Комната (1080–2160): тумба с телевизором, розетка, диван под окном, торшерный столик с лампой, дверь в кухню ──
+const roomT = t2 + 0.2;
+thing(flat, roomT, [[R(1100, 1100, 200, 150, 6), WOOD, 6], ['M1100 1175 H1300 M1200 1100 V1250', null, 4], ['M1140 1137 H1162 M1238 1137 H1260 M1140 1212 H1162 M1238 1212 H1260', null, 4],
+  [R(1115, 925, 170, 118, 8), DARK, 6], ['M1135 952 L1160 938', null, 3], ['M1185 1043 L1178 1100 M1215 1043 L1222 1100', null, 5]]);
+thing(flat, roomT + 0.45, [[R(1307, 1100, 36, 54, 6), WHITE, 4]]);
+thing(flat, roomT + 0.6, [[R(1400, 948, 360, SEAT - 942, 18), SOFA, 6], [R(1418, SEAT - 4, 324, 42, 12), SOFA2, 5], [R(1388, SEAT + 36, 384, 66, 8), SOFA, 6],
+  [R(1380, 1030, 54, SEAT + 102 - 1030, 18), SOFA2, 6], [R(1726, 1030, 54, SEAT + 102 - 1030, 18), SOFA2, 6], [`M1404 ${SEAT + 102} V1250 M1756 ${SEAT + 102} V1250`, null, 8]]);
+appear(el('image', {href: TX('glass_room'), x: 1432, y: 462, width: 296, height: 386, preserveAspectRatio: 'none'}, flat.clay), roomT + 1.0, 0.4); // стекло: светлое серо-синее
+thing(flat, roomT + 1.0, [[R(1440, 470, 280, 370, 6), null, 6], ['M1580 470 V840 M1440 600 H1720', null, 5], ['M1426 842 H1734', null, 8], ['M1398 446 H1762', null, 6]]);
+thing(flat, roomT + 1.45, [[R(1795, 1062, 120, 14, 4), WOOD, 5], [R(1808, 1076, 94, 48, 4), WOOD, 5], ['M1810 1124 V1250 M1900 1124 V1250', null, 7], ['M1845 1100 H1865', null, 4]]);
+thing(flat, roomT + 1.75, [[O(1855, 1056, 30, 8), '#3B3936', 4], ['M1855 1050 V902', null, 6], ['M1813 902 L1897 902 L1880 830 L1830 830 Z', SHADE0, 5], ['M1855 950 H1863', null, 4], [O(1869, 950, 6), WHITE, 3.5]]);
+// снег за окном
+{ const g = el('g', {}, dynL); for (let i = 0; i < 9; i++) el('circle', {cx: 1458 + ((i * 67) % 250), cy: 490 + ((i * 113) % 330), r: 2.5 + (i % 2), fill: PAPER}, g);
+  appear(g, roomT + 1.3); on((t) => [...g.children].forEach((c, i) => c.setAttribute('transform', `translate(${F1(Math.sin(t * 0.8 + i) * 4)} ${F1(((t * 30 + i * 17) % 40) - 20)})`))); }
+// шторы: открыты; на «окно закрой шторами» сходятся к середине
+const curt = [0, 1].map(() => el('path', {fill: CURT, stroke: INK, 'stroke-width': 5, 'stroke-linejoin': 'round', filter: 'url(#washS)'}, dynL));
+const folds = el('path', {fill: 'none', stroke: INK, 'stroke-width': 3, 'stroke-linecap': 'round', opacity: 0.55}, dynL);
+const rings = el('path', {fill: 'none', stroke: INK, 'stroke-width': 4}, dynL);
+appear(curt[0], roomT + 1.25); appear(curt[1], roomT + 1.3); appear(folds, roomT + 1.4); appear(rings, roomT + 1.3);
+on((t) => {
+  const c = EASE.io2(prog(t, wOkno + 0.5, wOkno + 1.05)), xl = lerp(1468, 1582, c), xr = lerp(1692, 1578, c);
+  const panel = (a, b, dir) => { const m = (a + b) / 2, w = b - a; return `M${F1(a)} 452 H${F1(b)} L${F1(b + dir * 4)} 890 Q${F1(m + w * 0.25)} 902 ${F1(m)} 890 Q${F1(m - w * 0.25)} 878 ${F1(a - dir * 4)} 892 Z`; };
+  curt[0].setAttribute('d', panel(1404, xl, 1)); curt[1].setAttribute('d', panel(xr, 1756, -1));
+  let f = '', r = '';
+  for (const [a, b] of [[1404, xl], [xr, 1756]]) { for (let k = 1; k < 4; k++) { const x = a + ((b - a) * k) / 4; f += `M${F1(x)} 470 V${F1(870 + (k % 2) * 8)}`; } for (let k = 0; k <= 3; k++) r += O(a + ((b - a) * k) / 3, 446, 7); }
+  folds.setAttribute('d', f); rings.setAttribute('d', r);
+});
+sfx(wOkno + 0.5, 'file:foley/curtain.wav', {gain: 1});
+// дверь в кухню: открыта; на «Закрой» поворачивается на петле и захлопывается
+const leaf = el('path', {fill: WOOD, stroke: INK, 'stroke-width': 6, 'stroke-linejoin': 'round', filter: 'url(#washS)'}, dynL);
+const leafP = el('path', {fill: 'none', stroke: INK, 'stroke-width': 3.5}, dynL);
+appear(leaf, roomT + 2.0); appear(leafP, roomT + 2.1);
+const DOOR_T0 = wZak + 0.15, DOOR_T1 = wZak + 0.55;
+on((t) => {
+  const q = EASE.i(prog(t, DOOR_T0, DOOR_T1)), ang = (1 - q) * Math.PI / 2, x0 = 2145 - 200 * Math.sin(ang), x1 = 2145 + 30 * Math.cos(ang), w = x1 - x0;
+  leaf.setAttribute('d', R(x0, 604, w, 644, 3));
+  leafP.setAttribute('d', w > 70 ? R(x0 + w * 0.17, 650, w * 0.66, 250, 4) + R(x0 + w * 0.17, 960, w * 0.66, 250, 4) + O(x0 + w * 0.1, 930, 7) : '');
+});
+sfx(DOOR_T1 - 0.05, 'file:foley/door_close.wav', {gain: 1});
+
+// ── Ванная (0–1080): плитка, ванна в разрезе, кран, бутылки ──
+const bathT = t3 - 0.35, PLUG_T = wNab - 0.06, TAP = wNab + 0.52;   // сначала пробка в слив, потом кран
+{
+  let lines = ''; for (let y = 650; y <= 1180; y += 88) lines += `M30 ${y} H1050`; for (let x = 30; x <= 1050; x += 88) lines += `M${x} 650 V1250`;
+  ink(flat, lines, bathT, 0.7, 2.4, {color: 'rgba(26,26,26,0.18)', noSketch: true});   // плитка — тонкой сеткой туши
+  ink(flat, 'M468 340 V846', bathT + 0.1, 0.3, 5, {color: SKY2});
+}
+const tubO = 'M60 1050 H540 V1168 Q540 1226 482 1226 H118 Q60 1226 60 1168 Z', tubI = 'M80 1050 H520 V1160 Q520 1206 474 1206 H126 Q80 1206 80 1160 Z';
+thing(flat, bathT + 0.25, [[tubO + tubI, WHITE, 0], [tubO, null, 6, 0.35], [tubI, null, 4, 0.3], ['M50 1050 H550', null, 9], ['M110 1226 L102 1250 M490 1226 L498 1250', null, 7]], {evenodd: true, step: 0.1, dx: 3, dy: 2});
+thing(flat, bathT + 0.7, [[O(468, 858, 13), STEEL, 4], ['M456 866 H424 Q414 866 414 876 V884', null, 10]]);
+const BOT = [
+  {d: 'M480 1250 V1138 Q480 1126 490 1122 L492 1108 H504 L506 1122 Q516 1126 516 1138 V1250 Z', cap: R(490, 1098, 16, 12, 3), top: 1124, t0: wBut + 0.75, t1: wBut + 1.5},
+  {d: R(548, 1140, 80, 110, 10), extra: 'M560 1140 V1126 Q560 1118 568 1118 H590 Q598 1118 598 1126 V1140', cap: R(606, 1126, 16, 14, 3), top: 1146, t0: wBut + 1.3, t1: wBut + 2.5},
+  {d: 'M640 1250 V1122 Q640 1110 650 1106 L652 1090 H664 L666 1106 Q676 1110 676 1122 V1250 Z', cap: R(650, 1080, 16, 12, 3), top: 1108, t0: wBut + 2.2, t1: wBut + 3.0},
+];
+BOT.forEach((b, i) => {
+  const id = 'bot' + i, cp = el('clipPath', {id}, E.defs); el('path', {d: b.d}, cp);
+  const glass = el('path', {d: b.d, fill: GLASS}, backL), wat = el('rect', {x: 470, width: 220, fill: WATER, 'clip-path': `url(#${id})`}, backL);
+  appear(glass, bathT + 0.9 + i * 0.1);
+  on((t) => { const lv = lerp(1252, b.top + 4, EASE.io2(prog(t, b.t0, b.t1))); wat.setAttribute('y', F1(lv)); wat.setAttribute('height', F1(Math.max(0, 1252 - lv))); show(wat, t > b.t0); });
+  thing(flat, bathT + 0.9 + i * 0.1, [[b.d, null, 4], ...(b.extra ? [[b.extra, null, 5]] : []), [b.cap, i === 1 ? SKY2 : CLAY, 3.5]]);
+});
+// пробка на цепочке висит на кране: герой берёт её и бросает в слив — потом открывает воду
+{
+  const DR = [466, 1197], HOOK = [468, 871], REST = [468, 940], DROP = wNab + 0.14, LAND = DROP + 0.28;
+  el('path', {d: O(466, 1204, 12, 3), fill: DARK}, backL);   // слив на дне
+  const chain = el('path', {fill: 'none', stroke: INK, 'stroke-width': 7, 'stroke-linecap': 'round', 'stroke-dasharray': '0.1 8'}, itemL);
+  const pg = el('g', {}, itemL);
+  el('path', {d: 'M-14 -8 H14 L10 9 H-10 Z', fill: DARK, stroke: INK, 'stroke-width': 5, 'stroke-linejoin': 'round'}, pg);
+  el('circle', {cx: 0, cy: -13, r: 4.5, fill: 'none', stroke: INK, 'stroke-width': 4.5}, pg);
+  el('path', {d: 'M-8 -3 H3', stroke: '#8A847C', 'stroke-width': 3.5, 'stroke-linecap': 'round'}, pg);
+  appear(pg, bathT + 0.9); appear(chain, bathT + 0.9);
+  on((t) => {
+    let p = REST, rot = 0;
+    if (t >= PLUG_T && t < DROP) { const h = hand0(t), k = EASE.o(prog(t, PLUG_T, PLUG_T + 0.1)); p = [lerp(REST[0], h[0] - 4, k), lerp(REST[1], h[1] + 12, k)]; }
+    else if (t >= DROP) { const h = hand0(DROP), p0 = [h[0] - 4, h[1] + 12], u = clamp(prog(t, DROP, LAND)), b = Math.sin(Math.PI * clamp(prog(t, LAND, LAND + 0.14))) * 5;
+      p = [lerp(p0[0], DR[0], u), lerp(p0[1], DR[1], u * u) - b]; rot = Math.sin(u * Math.PI) * -14; }
+    pg.setAttribute('transform', `translate(${F1(p[0])} ${F1(p[1])}) rotate(${F1(rot)})`);
+    const r = [p[0], p[1] - 13]; let d;   // цепочка: висит с крюка → свисает из руки → летит следом → лежит на дне
+    if (t < PLUG_T) d = `M${HOOK[0]} ${HOOK[1]} Q${F1(HOOK[0] + Math.sin(t * 2) * 1.5)} ${F1((HOOK[1] + r[1]) / 2)} ${F1(r[0])} ${F1(r[1])}`;
+    else if (t < DROP) d = `M${F1(r[0])} ${F1(r[1])} Q${F1(r[0] + 10)} ${F1(r[1] + 22)} ${F1(r[0] + 4)} ${F1(r[1] + 56)}`;
+    else if (t < LAND + 0.05) { const u = clamp(prog(t, DROP, LAND)); d = `M${F1(r[0])} ${F1(r[1])} Q${F1(r[0] + 8 - 14 * u)} ${F1(r[1] - 20 * u)} ${F1(r[0] + 2 - 8 * u)} ${F1(r[1] - 48 * u + 56 * (1 - u))}`; }
+    else d = `M${F1(r[0])} ${F1(r[1])} Q${F1(r[0] - 22)} ${F1(r[1] - 4)} ${F1(r[0] - 30)} 1204 L${F1(r[0] - 64)} 1204`;
+    chain.setAttribute('d', d);
+  });
+  sfx(LAND, 'file:foley/plug_plop.wav', {gain: 1});
+}
+// вода в ванне поднимается, пока идёт; на «напор» струя тончает и обрывается
+{
+  const cp = el('clipPath', {id: 'tubIn'}, E.defs); el('path', {d: tubI}, cp);
+  const water = el('rect', {x: 70, width: 470, fill: WATER, 'clip-path': 'url(#tubIn)'}, backL);
+  // кромка и блики на поверхности (вид канала)
+  const surf = CH && el('path', {fill: 'none', stroke: WATER2, 'stroke-width': 3.5, 'clip-path': 'url(#tubIn)'}, backL),
+    shine = CH && el('path', {fill: 'none', stroke: WATERHI, 'stroke-width': 4, 'stroke-linecap': 'round', opacity: 0.85, 'clip-path': 'url(#tubIn)'}, backL);
+  const STOP = wNap + 0.75, lvAt = (t) => lerp(1206, 1086, EASE.io2(prog(t, TAP + 0.35, STOP)));
+  on((t) => { const lv = lvAt(t), vis = t > TAP + 0.35; water.setAttribute('y', F1(lv)); water.setAttribute('height', F1(1210 - lv)); show(water, vis);
+    if (!surf) return; show(surf, vis); show(shine, vis && 1206 - lv > 14); surf.setAttribute('d', `M70 ${F1(lv + 1)} H540`);
+    const y1 = F1(lv + 10), y2 = F1(lv + 27); shine.setAttribute('d', `M112 ${y1} H176 M214 ${y1} H262 M300 ${y1} H380 M450 ${y1} H496` + (1206 - lv > 46 ? ` M150 ${y2} H196 M326 ${y2} H362 M466 ${y2} H500` : '')); });
+  const handle = el('g', {}, dynL);
+  el('path', {d: 'M468 846 V828', stroke: INK, 'stroke-width': 7, 'stroke-linecap': 'round'}, handle);
+  el('circle', {cx: 468, cy: 823, r: 9, fill: CLAY, stroke: INK, 'stroke-width': 4}, handle);
+  appear(handle, bathT + 0.8);
+  on((t) => handle.setAttribute('transform', `rotate(${F1(-65 * EASE.o(prog(t, TAP - 0.08, TAP + 0.2)))} 468 846)`));
+  const rip = CH && [0, 1].map(() => el('ellipse', {cx: 414, fill: 'none', stroke: WATERHI, 'stroke-width': 4}, dynL));   // круги от струи
+  const stream = el('path', {fill: WATER, stroke: INK, 'stroke-width': 2.5, 'stroke-linejoin': 'round'}, dynL);
+  const drop = el('path', {fill: WATER, stroke: INK, 'stroke-width': 2.5}, dynL);
+  on((t) => {
+    const w = 12 * EASE.o(prog(t, TAP + 0.02, TAP + 0.2)) * (1 - EASE.io2(prog(t, wNap + 0.15, STOP))), lv = lvAt(t);
+    if (rip) rip.forEach((r, k) => { const u = (t * 1.7 + k * 0.5) % 1, vis = w >= 0.8 && lv < 1198; show(r, vis); if (!vis) return;
+      r.setAttribute('cy', F1(lv + 2)); r.setAttribute('rx', F1(10 + 34 * u)); r.setAttribute('ry', F1(2.5 + 5 * u)); r.style.opacity = F1((1 - u) * Math.min(1, w / 8)); });
+    if (w < 0.8) show(stream, false); else { show(stream, true); const b = Math.floor(t * 12), j = (k) => Math.sin(b * 1.7 + k) * 1.2;
+      stream.setAttribute('d', `M${F1(414 - w / 2)} 886 C${F1(414 - w / 2 + j(1))} 960 ${F1(414 - w / 2 + j(2))} 1020 ${F1(414 - w / 2 - 1)} ${F1(lv)} H${F1(414 + w / 2 + 1)} C${F1(414 + w / 2 + j(3))} 1020 ${F1(414 + w / 2 + j(4))} 960 ${F1(414 + w / 2)} 886 Z`); }
+    // две последние капли
+    let dd = ''; for (const k of [0, 1]) { const ts = STOP + 0.1 + k * 0.55, u = prog(t, ts, ts + 0.42); if (u > 0 && u < 1) { const y = 892 + (lv - 892) * u * u; dd += `M414 ${F1(y - 9)} Q420 ${F1(y + 2)} 414 ${F1(y + 4)} Q408 ${F1(y + 2)} 414 ${F1(y - 9)} Z`; } }
+    drop.setAttribute('d', dd); show(drop, !!dd);
+  });
+  sfx(TAP + 0.1, 'file:foley/water_tap.wav', {gain: 1}); sfx(TAP + 2.3, 'file:foley/water_tap.wav', {gain: 1});
+}
+
+// ── Кухня (2160–3240): холодильник, столешница, полка с консервами, газовая плита, окно ──
+const kitT = t5 - 0.3;
+thing(flat, kitT, [[R(2200, 640, 240, 566, 14), WHITE, 6], [R(2206, 646, 228, 168, 8), null, 4], ['M2420 690 V780', null, 8], [R(2212, 1206, 216, 40, 4), STEEL, 4], ['M2240 1218 H2400 M2240 1232 H2400', null, 3]]);
+thing(flat, kitT + 0.35, [[R(2442, 948, 282, 16, 4), WOOD, 5], [R(2448, 964, 270, 270, 4), WHITE, 5], ['M2583 975 V1226', null, 4], ['M2565 1000 V1030 M2601 1000 V1030', null, 5], [`M2448 1234 H2718 V${FL} H2448 Z`, DARK, 4]]);
+thing(flat, kitT + 0.6, [['M2466 702 H2704', null, 7], ['M2482 702 V728 L2502 702 M2688 702 V728 L2668 702', null, 4],
+  ...[[2492, CLAY], [2560, SKY], [2628, OLIVE]].flatMap(([x, c]) => [[R(x - 24, 628, 48, 74, 6), STEEL, 4], [R(x - 24, 646, 48, 34), c, 3], [O(x, 632, 23, 5), null, 3]])]);
+thing(flat, kitT + 0.9, [[R(2738, 948, 284, 18, 4), DARK, 5], ['M2772 948 Q2800 922 2828 948 Z M2922 948 Q2950 922 2978 948 Z', DARK, 0], ['M2772 948 Q2800 922 2828 948 M2922 948 Q2950 922 2978 948', null, 5],
+  ['M2758 914 H2842 M2908 914 H2992 M2764 914 V947 M2836 914 V947 M2914 914 V947 M2986 914 V947', null, 4],
+  [R(2742, 966, 276, 284, 6), WHITE, 6], ...[2778, 2822, 2938, 2982].map((x) => [O(x, 990, 9), STEEL, 3.5]), ['M2790 1030 H2970', null, 7], [R(2768, 1048, 224, 176, 10), null, 5], [R(2792, 1070, 176, 112, 8), DARK, 4]]);
+thing(flat, kitT + 1.25, [['M3062 284 V988 H3024', null, 16], ['M3062 284 V988 H3024', null, 0]]);
+{ const pipe = el('path', {d: 'M3062 300 V988 H3026', fill: 'none', stroke: SAND, 'stroke-width': 8, 'stroke-linejoin': 'round'}, dynL); appear(pipe, kitT + 1.45); }
+appear(el('image', {href: TX('glass_kit'), x: 3072, y: 472, width: 156, height: 396, preserveAspectRatio: 'none'}, flat.clay), kitT + 1.5, 0.4);
+thing(flat, kitT + 1.5, [['M3062 900 L3092 884', null, 8], [R(3080, 480, 140, 380, 6), null, 6], ['M3150 480 V860', null, 5], ['M3068 862 H3232', null, 8]]);
+// чайник в горошек на правой конфорке — отсюда горячий чай в s07
+thing(flat, kitT + 1.6, [['M2904 914 C2898 880 2918 858 2952 856 C2986 858 3006 880 3000 914 Z', CLAY, 5], ['M2994 888 L3026 864 L3034 874 L3000 908 Z', CLAY, 4],
+  [[[2936, 877], [2968, 877], [2920, 898], [2952, 898], [2984, 898]].map(([x, y]) => O(x, y, 5.5)).join(''), PAPER, 0],
+  ['M2924 861 Q2952 848 2980 861', null, 4], [O(2952, 850, 8, 6), DARK, 3.5], ['M2920 866 C2914 812 2990 812 2984 866', null, 6]]);
+// иней на кухонном окне — на «прохладнее»
+ink(flat, 'M3086 852 Q3096 822 3088 798 M3088 826 Q3104 818 3110 800 M3214 852 Q3204 824 3212 800 M3212 828 Q3196 820 3190 804 M3086 496 Q3100 520 3092 548 M3146 852 Q3140 830 3146 812 M3156 852 Q3162 830 3156 814',
+  wPro - 0.25, 0.8, 3.5, {color: PAPER});
+// холодильник: дверца на зрителя, петли слева; внутри — полки и продукты
+const fin = el('g', {}, dynL), fdoor = el('path', {fill: WHITE, stroke: INK, 'stroke-width': 6, 'stroke-linejoin': 'round', filter: 'url(#washS)'}, dynL), fhand = el('path', {fill: 'none', stroke: INK, 'stroke-width': 8, 'stroke-linecap': 'round'}, dynL);
+{
+  const P = (d, fill, w = 4) => el('path', {d, fill: fill || 'none', stroke: INK, 'stroke-width': w, 'stroke-linejoin': 'round', 'stroke-linecap': 'round'}, fin);
+  P(R(2210, 826, 220, 376, 6), '#DCE0E2', 4); P('M2212 948 H2428 M2212 1060 H2428', null, 5); P(R(2220, 1106, 200, 88, 8), GLASS, 4);
+  P('M2384 828 H2422 V835 Q2422 841 2416 841 H2390 Q2384 841 2384 835 Z', STEEL, 3); P('M2393 841 Q2393 859 2403 859 Q2413 859 2413 841', '#ADA79E', 3);   // лампочка — не горит
+  P('M2224 948 V876 L2236 860 H2256 L2268 876 V948 Z', WHITE); P('M2224 900 H2268 V924 H2224 Z', SKY, 3); P('M2236 860 V852 H2256 V860', null, 3);           // молоко
+  P('M2282 948 L2346 948 L2346 912 Z', SAND); P('M2282 948 L2346 912', null, 3); P(O(2326, 936, 4) + O(2338, 926, 3) + O(2310, 941, 3), INK, 0);          // сыр с дырками
+  P('M2230 1060 V1000 Q2230 992 2238 992 H2272 Q2280 992 2280 1000 V1060 Z', GLASS); P(R(2228, 980, 54, 14, 4), CLAY2, 3);                                 // банка огурцов
+  P(O(2244, 1030, 8, 20) + O(2262, 1036, 8, 18), OLIVE, 3);
+  P(O(2304, 1046, 11, 14) + O(2328, 1046, 11, 14) + O(2352, 1046, 11, 14), WHITE, 3); P('M2290 1060 H2366', null, 4);                                       // яйца
+  P(O(2400, 1040, 19, 18), CH ? CLAY2 : '#B5533C', 4); P('M2400 1022 Q2402 1012 2406 1006', null, 4); P('M2404 1014 Q2418 1004 2424 1014 Q2414 1022 2404 1014 Z', OLIVE, 3); // яблоко
+  P('M2236 1180 L2262 1124 L2276 1130 Z M2290 1182 L2318 1126 L2330 1134 Z', CLAY, 3); P('M2262 1124 L2258 1110 M2266 1124 L2274 1110 M2318 1126 L2314 1112 M2322 1126 L2332 1114', null, 3); // морковь
+}
+const fOpen = (t) => EASE.io2(prog(t, wHol - 0.05, wHol + 0.3)) * (1 - EASE.io2(prog(t, wHol + 1.35, wHol + 1.65)));
+appear(fdoor, kitT + 0.1); appear(fhand, kitT + 0.25);
+on((t) => {
+  const o = fOpen(t), a = o * 1.3, x2 = 2206 + 228 * Math.cos(a), e = 28 * Math.sin(a);
+  show(fin, o > 0.01);
+  fdoor.setAttribute('d', `M2206 822 L${F1(x2)} ${F1(822 - e)} L${F1(x2)} ${F1(1200 + e)} L2206 1200 Z` + (o > 0.3 ? `M2212 ${F1(900 - e * 0.5)} L${F1(x2 - 6)} ${F1(900 - e * 0.8)} M2212 ${F1(1040)} L${F1(x2 - 6)} ${F1(1040)}` : ''));
+  fhand.setAttribute('d', o < 0.05 ? 'M2420 870 V1010' : ''); show(fhand, t > kitT + 0.25 && o < 0.05);
+});
+sfx(wHol - 0.1, 'file:foley/fridge_open.wav', {gain: 1}); sfx(wHol + 1.55, 'file:foley/fridge_close.wav', {gain: 1});
+// холод из открытой камеры: стекает вниз и стелется по полу — поэтому дверцу лишний раз не открывать
+{
+  const wisp = [0, 1, 2].map(() => el('path', {fill: 'none', stroke: SKY2, 'stroke-width': 6, 'stroke-linecap': 'round', 'stroke-dasharray': '16 12'}, dynL));
+  on((t) => { const a = EASE.o(prog(t, wHol + 0.15, wHol + 0.5)) * (1 - EASE.io2(prog(t, wHol + 1.7, wHol + 2.5))), g = EASE.o(prog(t, wHol + 0.1, wHol + 1.3));
+    wisp.forEach((p, k) => { if (a < 0.01) { show(p, false); return; } show(p, true); let d = ''; const x0 = 2298 + k * 44;
+      for (let j = 0; j <= 14; j++) { const u = (j / 14) * g, x = u < 0.3 ? x0 + (u / 0.3) * 14 : x0 + 14 + ((u - 0.3) / 0.7) * (190 + k * 50),
+        y = u < 0.3 ? 1194 + EASE.io2(u / 0.3) * (48 - k * 6) : 1242 - k * 6 + Math.sin(j * 0.9 + t * 3 + k) * 3; d += (j ? 'L' : 'M') + F1(x) + ' ' + F1(y); }
+      p.setAttribute('d', d); p.style.strokeDashoffset = F1(-t * 50); p.style.opacity = F1(a * 0.9); }); });
+}
+
+// ══ Герой — «ты»: позы на слова; между шагами — исчезает и рисуется заново на новом месте ══
+const X2 = 1600, XB = 730, XO = 1325 - you.probe('kneelLow', -1).hand0[0], XL = 1872 - you.probe('reachLow', 1).hand0[0];
+const XF = 2420 - you.probe('reachLow', -1).hand0[0], XD1 = 1950 - you.probe('reach', 1).hand0[0], XD2 = 2104 - you.probe('kneelFloor', 1).hand0[0], XC = 1580 - you.probe('reachUp', -1).hand0[0];
+const XF2 = XF - 45, PH_LF = {lean: 28, sh: [-60, -30], el: [-5, -20], hp: [-3, 4], kn: [3, 0]}, PH_L = {lean: 4, sh: [-5, -20], el: [-75, -20], hp: [-3, 4], kn: [3, 0]};   // у плиты — на полшага левее: руки «греются» над левой конфоркой, не касаются чайника
+const PH_S = {lean: 2, sh: [6, -34], el: [-8, -54], hp: [-3, 4], kn: [3, 0]}, PH_STR = {lean: 4, sh: [-20, -60], el: [-85, -45], hp: [-3, 4], kn: [3, 0]};   // коробок в дальней руке перед собой; чирк — коробок у груди над ближним предплечьем, спичка рядом
+function seq(list) { let cur = {}; return list.map(([t, k]) => { cur = {...cur, ...k}; return [t, {...cur}]; }); }
+// склейка: старое место уже ушло из кадра — герой гаснет там и рисуется кистью на новом месте
+const jump = (t, k) => [[t, {vis: 1}], [t + 0.005, {vis: 0}], [t + 0.01, {...k, vis: 0}]];
+const offAt = (x, t0, t1, half = 140) => { for (let t = t0; t <= t1; t += 1 / 120) { const C = E.camAt(t), L = (x - half - C.x) * C.s + 540, Rr = (x + half - C.x) * C.s + 540; if (Rr < -20 || L > 1100) return t; } console.warn('герой не ушёл из кадра', x, t0); return t1; };
+const drawIn = (a, b) => [[a, {vis: 0}], [b, {vis: 1}]];
+// ключи героя — в конце, после камеры: склейка между шагами считается от её проезда
+// ══ Вещи в руках и действия ══
+// вилка телевизора: в розетке → в руке на «розеток» → падает на пол, когда встаёшь
+const plug = el('g', {}, itemL), cord = el('path', {fill: 'none', stroke: INK, 'stroke-width': 6, 'stroke-linecap': 'round'}, itemL);
+el('path', {d: R(-14, -15, 28, 30, 5), fill: DARK, stroke: INK, 'stroke-width': 4}, plug); el('path', {d: 'M-6 -15 V-26 M6 -15 V-26', stroke: INK, 'stroke-width': 4, 'stroke-linecap': 'round'}, plug);
+appear(plug, roomT + 0.5); appear(cord, roomT + 0.5);
+const PLUG0 = [1325, 1127 + 4], hand0 = you.hand(0), PULL_T = wRoz - 0.05, DROP_T = wRoz + 0.75;
+const plugAt = (t) => {
+  if (t < PULL_T) return [...PLUG0, 0];
+  const h = hand0(Math.min(t, DROP_T)), g = [1398, 1236];
+  if (t < DROP_T) { const k = EASE.o(prog(t, PULL_T, PULL_T + 0.12)); return [lerp(PLUG0[0], h[0] + 10, k), lerp(PLUG0[1], h[1] + 6, k), -90 * k]; }
+  const u = prog(t, DROP_T, DROP_T + 0.32), b = u < 1 ? u * u : 1; return [lerp(h[0] + 10, g[0], u), lerp(h[1] + 6, g[1], b), lerp(-90, -90, u)];
+};
+on((t) => { const [x, y, r] = plugAt(t); plug.setAttribute('transform', `translate(${F1(x)} ${F1(y)}) rotate(${F1(r)})`); const sx = 1300, sy = 1192, ex = x + Math.sin((r * Math.PI) / 180) * -16, ey = y + Math.cos((r * Math.PI) / 180) * 16;
+  cord.setAttribute('d', `M${sx} ${sy} Q${F1((sx + ex) / 2)} ${F1(Math.max(sy, ey) + 40)} ${F1(ex)} ${F1(ey)}`); });
+sfx(PULL_T + 0.05, 'file:foley/plug_pull.wav', {gain: 1});
+// искра из пустой розетки на «скачком»
+thing(flat, wSka - 0.05, [['M1350 1100 L1372 1074 L1362 1070 L1388 1042 L1376 1066 L1386 1070 Z', SAND, 4], ['M1300 1086 L1286 1072 M1312 1076 L1306 1058 M1356 1132 L1376 1140', null, 4]], {step: 0.05});
+// лампа: щелчок на «оставь»; свет — на «свет» в s08
+const knob = el('circle', {cx: 1869, cy: 950, r: 6, fill: CLAY, stroke: INK, 'stroke-width': 3.5}, dynL);
+on((t) => show(knob, t > wOst + 0.02));
+sfx(wOst + 0.02, 'file:foley/switch_click.wav', {gain: 1});
+const glow = el('circle', {cx: 1855, cy: 870, r: 360, fill: 'url(#lampGlow)'}, backL);
+const shadeLit = el('path', {d: 'M1813 902 L1897 902 L1880 830 L1830 830 Z', fill: SHADE1, stroke: INK, 'stroke-width': 5}, dynL);
+// свет дали: холодная отмывка уходит со стен кругом от лампы (маска — только пока идёт свет, иначе лишняя работа на кадр)
+{ const litC = document.getElementById('litC');
+  on((t) => { const q = EASE.io2(prog(t, LIT1, LIT1 + 1.5)); litC.setAttribute('r', F1(3600 * q)); if (q > 0) wallL.setAttribute('mask', 'url(#litMask)'); else wallL.removeAttribute('mask'); }); }
+on((t) => { const a = EASE.back(clamp(prog(t, POWER2 - 0.05, POWER2 + 0.3))); glow.setAttribute('r', F1(360 * Math.max(0, a))); glow.style.opacity = Math.min(1, a); show(glow, a > 0.01); show(shadeLit, t > POWER2); });
+ink(flat, 'M1792 820 L1770 800 M1918 820 L1940 800 M1782 866 L1752 866 M1928 866 L1958 866 M1855 812 V786', H2_PAN1 - 0.25, 0.3, 5, {color: CLAY2});
+sfx(POWER2, 'file:foley/fridge_hum.wav', {gain: 1});
+// тарелка из холодильника: полка → в руках → на столешницу
+const plate = el('g', {}, itemL);
+el('path', {d: 'M-34 0 H34 Q30 9 20 10 H-20 Q-30 9 -34 0 Z', fill: WHITE, stroke: INK, 'stroke-width': 4}, plate);
+el('path', {d: 'M-26 0 L10 0 L10 -22 Z', fill: SAND, stroke: INK, 'stroke-width': 3.5, 'stroke-linejoin': 'round'}, plate);
+el('path', {d: O(-2, -5, 2.6) + O(4, -11, 2)}, plate).setAttribute('fill', INK);
+el('path', {d: O(19, -6, 9, 6) + O(25, -9, 8, 6), fill: CLAY2, stroke: INK, 'stroke-width': 3}, plate);
+const SHELF = [2398, 946], CTR = [2496, 946], hand1 = you.hand(1);
+const G1 = wHol + 0.8, G2 = wHol + 2.15;
+on((t) => {
+  let p = SHELF; const hm = (tt) => { const a = hand0(tt), b = hand1(tt); return [(a[0] + b[0]) / 2, Math.max(a[1], b[1]) + 2]; };
+  if (t >= G1 && t < G2) { const h = hm(t), k = EASE.o(prog(t, G1, G1 + 0.15)); p = [lerp(SHELF[0], h[0], k), lerp(SHELF[1], h[1], k)]; }
+  else if (t >= G2) { const h = hm(G2), k = EASE.io2(prog(t, G2, G2 + 0.18)); p = [lerp(h[0], CTR[0], k), lerp(h[1], CTR[1], k)]; }
+  plate.setAttribute('transform', `translate(${F1(p[0])} ${F1(p[1])})`);
+  show(plate, (t > wHol + 0.1 && t < G1) ? fOpen(t) > 0.3 : t >= G1);
+});
+// плита: малый огонь под чайником (вскипятить — можно) и открытый огонь «для тепла» — под запретом; от него угарный газ идёт к лицу
+const KET_ON = t6 + 0.45, KET_OFF = t7 - 0.45, WRM_ON = wGaz + 0.22, WRM_OFF = t7 - 0.75;
+{
+  const gr = el('radialGradient', {id: 'flGlow'}, E.defs);
+  el('stop', {offset: 0, 'stop-color': '#8CC4F2', 'stop-opacity': 0.6}, gr); el('stop', {offset: 1, 'stop-color': '#8CC4F2', 'stop-opacity': 0}, gr);
+  /** Венец языков пламени над конфоркой: n языков на ширине W, высота H; b — зерно кадра (12 к/с). */
+  const flameD = (cx, yb, W, H, n, b, k) => {
+    const x0 = cx - W / 2, st = W / n; let d = `M${F1(x0 - 2)} ${F1(yb)}`;
+    for (let i = 0; i < n; i++) {
+      const u = ((i + 0.5) / n) * 2 - 1, hi = H * (1 - 0.35 * u * u) * (0.86 + 0.14 * Math.sin(b * 2.3 + i * 1.9 + k * 3));
+      const xt = x0 + st * (i + 0.5) + u * H * 0.3 + Math.sin(b * 1.7 + i * 2.1 + k) * 1.5, xa = x0 + st * i, xb = x0 + st * (i + 1), last = i === n - 1;
+      d += ` Q${F1(xa + st * 0.08)} ${F1(yb - hi * 0.55)} ${F1(xt)} ${F1(yb - hi)} Q${F1(xb - st * 0.08)} ${F1(yb - hi * 0.55)} ${F1(last ? xb + 2 : xb)} ${F1(last ? yb : yb - H * 0.28)}`;
+    }
+    return d + ` Q${F1(cx)} ${F1(yb + 4)} ${F1(x0 - 2)} ${F1(yb)} Z`;
+  };
+  [{cx: 2800, W: 50, H: 46, n: 5, t0: WRM_ON, t1: WRM_OFF}, {cx: 2950, W: 54, H: 20, n: 6, t0: KET_ON, t1: KET_OFF}].forEach((f, k) => {
+    const glow = el('ellipse', {cx: f.cx, fill: 'url(#flGlow)'}, backL), outer = el('path', {fill: '#4F8DD6', stroke: '#1D3A63', 'stroke-width': 2.2, 'stroke-linejoin': 'round'}, backL), inner = el('path', {fill: '#C4E6FB'}, backL);
+    on((t) => { const s = EASE.back(prog(t, f.t0, f.t0 + 0.3)) * (1 - EASE.io2(prog(t, f.t1 - 0.25, f.t1))), vis = t > f.t0 && s > 0.03;
+      [glow, outer, inner].forEach((n) => show(n, vis)); if (!vis) return; const b = Math.floor(t * 12), h = f.H * s;
+      outer.setAttribute('d', flameD(f.cx, 937, f.W, h, f.n, b, k)); inner.setAttribute('d', flameD(f.cx, 937, f.W * 0.6, h * 0.45, f.n - 2, b + 3, k + 1));
+      glow.setAttribute('cy', F1(937 - h * 0.45)); glow.setAttribute('rx', F1(f.W * 0.95)); glow.setAttribute('ry', F1(h * 0.9 + 6)); });
+    sfx(f.t0 - 0.02, 'file:foley/gas_on.wav', {gain: 1});   // газ вспыхнул от спички
+  });
+}
+// спичка в руке: загорается → под чайником (дальняя конфорка, тянется) → открытый огонь «для тепла» → гаснет, дымок
+const M_ON = t6 + 0.14, M_OUT = WRM_ON + 0.16, M_END = WRM_ON + 0.3;
+{
+  const gr = el('radialGradient', {id: 'mGlow'}, E.defs);
+  el('stop', {offset: 0, 'stop-color': '#FBD27A', 'stop-opacity': 0.7}, gr); el('stop', {offset: 1, 'stop-color': '#FBD27A', 'stop-opacity': 0}, gr);
+  const g = el('g', {}, itemL), glowM = el('circle', {r: 30, fill: 'url(#mGlow)'}, g);
+  const sI = el('path', {fill: 'none', stroke: INK, 'stroke-width': 10, 'stroke-linecap': 'round'}, g), sW = el('path', {fill: 'none', stroke: '#EBD3A6', 'stroke-width': 5.5, 'stroke-linecap': 'round'}, g);
+  const hd = el('ellipse', {rx: 5.5, ry: 4.5, fill: '#8E3B2A', stroke: INK, 'stroke-width': 3}, g);
+  const fo = el('path', {fill: '#F2A649', stroke: '#9A4B1E', 'stroke-width': 3.4, 'stroke-linejoin': 'round'}, g), fi = el('path', {fill: '#FCE59A'}, g);
+  const smoke = el('path', {fill: 'none', stroke: '#8E8C86', 'stroke-width': 4.5, 'stroke-linecap': 'round'}, itemL);
+  const tear = (x, y, w, h, wob) => `M${F1(x - w / 2)} ${F1(y)} Q${F1(x - w / 2)} ${F1(y - h * 0.55)} ${F1(x + wob)} ${F1(y - h)} Q${F1(x + w / 2)} ${F1(y - h * 0.55)} ${F1(x + w / 2)} ${F1(y)} Q${F1(x)} ${F1(y + w * 0.6)} ${F1(x - w / 2)} ${F1(y)} Z`;
+  const reachW = (t) => Math.max(EASE.io2(prog(t, M_ON - 0.02, KET_ON - 0.1)) * (1 - EASE.io2(prog(t, KET_ON + 0.16, KET_ON + 0.48))),
+    EASE.io2(prog(t, WRM_ON - 0.32, WRM_ON - 0.08)) * (1 - EASE.io2(prog(t, WRM_ON + 0.12, wGaz + 0.62))));
+  let tipOut = [0, 0];
+  on((t) => {
+    const vis = t >= M_ON && t < M_END + 0.12; show(g, vis);
+    if (vis) {
+      const h = hand0(t), th = ((-38 + 38 * reachW(t)) * Math.PI) / 180, c = Math.cos(th), sn = Math.sin(th);
+      const bx = h[0] - 4 * c, by = h[1] - 4 * sn, tx = h[0] + 34 * c, ty = h[1] + 34 * sn;
+      sI.setAttribute('d', `M${F1(bx)} ${F1(by)} L${F1(tx)} ${F1(ty)}`); sW.setAttribute('d', `M${F1(bx)} ${F1(by)} L${F1(tx)} ${F1(ty)}`);
+      hd.setAttribute('cx', F1(tx)); hd.setAttribute('cy', F1(ty)); hd.setAttribute('transform', `rotate(${F1((th * 180) / Math.PI)} ${F1(tx)} ${F1(ty)})`);
+      const b = Math.floor(t * 12), fl = EASE.back(clamp(prog(t, M_ON, M_ON + 0.16))) * (1 - EASE.io2(prog(t, M_OUT, M_OUT + 0.09))) * (0.9 + 0.1 * Math.sin(b * 2.7));
+      const flash = 1 + 0.5 * (1 - clamp(prog(t, M_ON, M_ON + 0.25)));
+      show(fo, fl > 0.02); show(fi, fl > 0.02); show(glowM, fl > 0.02);
+      if (fl > 0.02) { const wob = Math.sin(b * 1.9) * 2; fo.setAttribute('d', tear(tx + 1, ty - 1, 12 * fl * flash, 24 * fl * flash, wob)); fi.setAttribute('d', tear(tx + 1, ty - 1, 6 * fl, 12 * fl, wob * 0.5));
+        glowM.setAttribute('cx', F1(tx)); glowM.setAttribute('cy', F1(ty - 10)); glowM.setAttribute('r', F1(30 * fl * flash)); }
+      g.style.opacity = F1(1 - clamp(prog(t, M_END, M_END + 0.12)));
+      if (t < M_OUT + 0.05) tipOut = [tx, ty];
+    }
+    // дымок от погасшей спички
+    const u = prog(t, M_OUT + 0.02, M_OUT + 0.8); show(smoke, u > 0 && u < 1);
+    if (u > 0 && u < 1) { const h = hand0(M_OUT + 0.02), th = 0, x0 = h[0] + 34, y0 = h[1]; let d = '';
+      for (let j = 0; j <= 8; j++) { const q = j / 8; d += (j ? 'L' : 'M') + F1(x0 + Math.sin(q * 5 + t * 4) * 5 * q) + ' ' + F1(y0 - 6 - q * 50 * EASE.o(u)); }
+      smoke.setAttribute('d', d); smoke.style.opacity = F1(0.7 * (1 - u)); }
+  });
+  sfx(M_ON - 0.08, 'file:foley/match.wav', {gain: 1});
+}
+// коробок спичек: лежит на краю столешницы у плиты; на повороте к плите — в дальнюю руку (о него чиркает спичка), после второй конфорки — обратно
+{
+  const MB_IN = t6 + 0.06, MB_GOT = MB_IN + 0.08, MB_PUT = WRM_ON + 0.12, MB_DOWN = MB_PUT + 0.18, AT = [2705, 940];
+  const PARTS = [[R(-17, -8, 34, 16, 2), SAND, 4], [R(-17, -8, 34, 5, 1), CLAY2, 0], ['M7 -8 L20 -17 M1 -8 L12 -20', null, 3], [O(21, -17.5, 3) + O(13, -21, 3), CLAY2, 0]];
+  const mk = (par, k) => { const g = el('g', {}, par); PARTS.forEach(([d, c, w]) => el('path', {d, fill: c || 'none', stroke: w ? INK : 'none', 'stroke-width': w * k, 'stroke-linejoin': 'round', 'stroke-linecap': 'round'}, g)); return g; };
+  const onTop = mk(dynL, 1), inHand = mk(you.armB.g, 0.6);   // на столешнице — за героем (тушь dynL тоньшит общий цикл); в руке — между дальней рукой и телом
+  onTop.setAttribute('transform', `translate(${AT[0]} ${AT[1]})`);
+  const hold = () => { const hb = you.armB.hand, cx = +hb.getAttribute('cx'), cy = +hb.getAttribute('cy'), m = /rotate\(([-\d.]+)/.exec(hb.getAttribute('transform') || ''), a = m ? +m[1] : 0, r = (a * Math.PI) / 180;
+    return [cx + Math.cos(r) * 8, cy + Math.sin(r) * 8, clamp(a * 0.5, -45, 45)]; };
+  on((t) => {
+    const held = t >= MB_IN && t < MB_DOWN;
+    show(onTop, t >= kitT + 1.75 && !held); onTop.style.opacity = F1(EASE.o(prog(t, kitT + 1.75, kitT + 2.0)));
+    show(inHand, held); if (!held) return;
+    const h = hold(); let p = h;
+    if (t < MB_GOT) { const u = EASE.io2(prog(t, MB_IN, MB_GOT)); p = [lerp(AT[0], h[0], u), lerp(AT[1], h[1], u), lerp(0, h[2], u)]; }
+    else if (t >= MB_PUT) { const u = EASE.io2(prog(t, MB_PUT, MB_DOWN)); p = [lerp(h[0], AT[0], u), lerp(h[1], AT[1], u), lerp(h[2], 0, u)]; }
+    inHand.setAttribute('transform', `translate(${F1(p[0])} ${F1(p[1])}) rotate(${F1(p[2])})`);
+  });
+}
+// пар из носика, пока чайник на огне (и немного после)
+{
+  const st = [0, 1, 2].map(() => el('path', {fill: 'none', stroke: INK, 'stroke-width': 4, 'stroke-linecap': 'round'}, dynL));
+  on((t) => { const a = EASE.o(prog(t, KET_ON + 0.9, KET_ON + 1.6)) * (1 - EASE.io2(prog(t, KET_OFF + 0.2, KET_OFF + 1.0))), tt = Math.floor(t * 12) / 12;
+    st.forEach((p, i) => { show(p, a > 0.02); if (a <= 0.02) return; let d = '';
+      for (let j = 0; j <= 7; j++) d += (j ? 'L' : 'M') + F1(3030 + (i - 1) * 9 + Math.sin(j * 0.9 + tt * 5 + i * 2) * 5 - j * 1.2) + ' ' + F1(856 - j * 12 * a - ((tt * 30) % 12));
+      p.setAttribute('d', d); p.style.opacity = F1(0.55 * a); }); });
+}
+// запрет на «не включай» — над открытым огнём и руками
+ink(flat, O(2800, 884, 62), wNe - 0.08, 0.3, 12, {color: CLAY2, parent: noteL});
+ink(flat, 'M2756 840 L2844 928', wNe + 0.18, 0.15, 12, {color: CLAY2, parent: noteL});
+// угарный газ: пунктирные клубы без цвета от открытого огня к лицу, в первом — «CO»
+{
+  const CO = '#8E8C86', P0 = [2800, 884], PF = [{to: [2712, 752], r: 40, d: 0}, {to: [2772, 690], r: 34, d: 0.45}, {to: [2858, 782], r: 30, d: 0.9}];
+  const cloudD = (cx, cy, r, ph) => { let d = ''; for (let i = 0; i <= 7; i++) { const a = (i / 7) * 2 * Math.PI + ph, x = cx + Math.cos(a) * r * 1.2, y = cy + Math.sin(a) * r * 0.78;
+    if (!i) d = `M${F1(x)} ${F1(y)}`; else { const am = a - Math.PI / 7; d += ` Q${F1(cx + Math.cos(am) * r * 1.62)} ${F1(cy + Math.sin(am) * r * 1.08)} ${F1(x)} ${F1(y)}`; } } return d + 'Z'; };
+  const wisps = [0, 1, 2].map(() => el('path', {fill: 'none', stroke: CO, 'stroke-width': 5, 'stroke-linecap': 'round', 'stroke-dasharray': '2 14'}, dynL));
+  const puffs = PF.map(() => el('path', {fill: CO, 'fill-opacity': 0.2, stroke: '#76736C', 'stroke-width': 5, 'stroke-dasharray': '12 8', 'stroke-linejoin': 'round'}, dynL));
+  const lab = el('text', {'font-family': 'Hand', 'font-weight': 700, 'font-size': 46, fill: '#5E5B55', 'text-anchor': 'middle'}, dynL); lab.textContent = 'CO';
+  on((t) => { const a = EASE.o(prog(t, wUg - 0.35, wUg + 0.3)) * (1 - EASE.io2(prog(t, t7 - 0.4, t7 - 0.1))), vis = a > 0.01;
+    [...wisps, ...puffs, lab].forEach((n) => show(n, vis)); if (!vis) return;
+    const pos = PF.map((f, k) => { const u = EASE.o(prog(t, wUg - 0.3 + f.d, wUg + 1.1 + f.d));
+      return [lerp(P0[0], f.to[0], u) + Math.sin(t * 1.3 + k * 2) * 6 * u, lerp(P0[1], f.to[1], u) + Math.cos(t * 1.1 + k) * 4 * u, lerp(8, f.r, u) * (1 + 0.12 * prog(t, wUg + 1.1 + f.d, t7)), u]; });   // копится
+    puffs.forEach((p, k) => { const [x, y, r, u] = pos[k]; p.setAttribute('d', cloudD(x, y, r, k * 0.9 + t * 0.25)); p.style.opacity = F1(a * Math.min(1, u * 4)); p.style.strokeDashoffset = F1(-t * 18); });
+    { const [x, y, , u] = pos[0]; lab.setAttribute('x', F1(x)); lab.setAttribute('y', F1(y + 15)); lab.style.opacity = F1(a * EASE.o(prog(u, 0.55, 0.95))); }
+    wisps.forEach((p, k) => { const [tx, ty] = pos[k]; let d = '';
+      for (let j = 0; j <= 12; j++) { const s = j / 12, x = lerp(P0[0] + (k - 1) * 12, tx, s) + Math.sin(s * Math.PI) * (k - 1) * 18 + Math.sin(j * 0.8 + t * 1.6 + k * 2) * 5 * s; d += (j ? 'L' : 'M') + F1(x) + ' ' + F1(lerp(P0[1], ty, s)); }
+      p.setAttribute('d', d); p.style.strokeDashoffset = F1(-t * 40); p.style.opacity = F1(a * 0.85); }); });
+}
+// холод из-под закрытой двери — до полотенца
+{
+  const wisp = [0, 1, 2].map(() => el('path', {fill: 'none', stroke: SKY2, 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-dasharray': '16 12'}, dynL));
+  on((t) => { const a = EASE.o(prog(t, DOOR_T1 + 0.05, DOOR_T1 + 0.4)) * (1 - EASE.io2(prog(t, wZat - 0.1, wZat + 0.2)));
+    wisp.forEach((p, k) => { if (a < 0.01) { show(p, false); return; } show(p, true); let d = '';
+      for (let j = 0; j <= 10; j++) { const x = 2140 - j * 20 * a, y = 1238 - k * 12 - j * (1.2 + k * 0.8) + Math.sin(j * 0.9 + t * 3 + k) * 4; d += (j ? 'L' : 'M') + F1(x) + ' ' + F1(y); }
+      p.setAttribute('d', d); p.style.strokeDashoffset = F1(t * 60); p.style.opacity = a; }); });
+}
+// полотенце под дверь на «заткни»
+thing(flat, wZat - 0.12, [[R(2060, 1206, 88, 44, 20), SKY, 5], ['M2084 1210 V1246 M2104 1208 V1248 M2124 1210 V1246', null, 3]], {color: undefined});
+sfx(wZat - 0.1, 'file:foley/cloth.wav', {gain: 1});
+// плед на спинке дивана на «одеяла»
+thing(flat, wOde - 0.1, [['M1424 944 Q1500 932 1596 944 L1600 1092 Q1574 1104 1552 1094 Q1530 1104 1508 1094 Q1486 1104 1464 1094 Q1442 1104 1420 1094 Z', CLAY2, 5], ['M1422 990 Q1500 980 1598 990 M1421 1046 Q1500 1036 1599 1046', null, 3.5]]);
+// кружка с паром в руках на «горячий чай»
+const mug = el('g', {}, itemL);
+el('path', {d: 'M-22 -30 H22 V12 C22 26 -22 26 -22 12 Z', fill: CLAY, stroke: INK, 'stroke-width': 4}, mug);
+el('path', {d: 'M22 -20 C40 -20 40 4 22 4', fill: 'none', stroke: INK, 'stroke-width': 4}, mug);
+const steam = [0, 1].map(() => el('path', {fill: 'none', stroke: INK, 'stroke-width': 3, 'stroke-linecap': 'round', opacity: 0.6}, mug));
+on((t) => { const vis = t > wChai - 0.05; show(mug, vis); if (!vis) return; const a = hand0(t), b = hand1(t), k = EASE.back(clamp(prog(t, wChai - 0.05, wChai + 0.25)));
+  mug.setAttribute('transform', `translate(${F1((a[0] + b[0]) / 2)} ${F1((a[1] + b[1]) / 2 + 4)}) scale(${k.toFixed(3)})`);
+  const tt = Math.floor(t * 12) / 12; steam.forEach((p, i) => { let d = ''; for (let j = 0; j <= 6; j++) d += (j ? 'L' : 'M') + F1(-8 + i * 16 + Math.sin(j * 0.9 + tt * 5 + i) * 5) + ' ' + F1(-36 - j * 10 - ((tt * 30) % 10)); p.setAttribute('d', d); }); });
+sfx(wChai, 'file:foley/mug.wav', {gain: 1});
+// кот: в тёплой комнате сворачивается на уголке пледа рядом с героем и дышит во сне (слой — под героем, поверх туши дивана)
+{
+  const CAT_T = wChai + 0.3, CX = 1488, CY = 1103, CS = 0.88;   // место между подлокотником и спиной героя
+  const slab = el('g', {}, flat.top); flat.top.insertBefore(slab, heroL);
+  const SL = 'M1432 1109 Q1428 1101 1440 1100 H1574 Q1588 1101 1584 1109 Z', slC = el('g', {}, slab), slI = el('g', {}, slab);
+  clay(flat, SL, CAT_T - 0.1, CLAY2, 3, 2, {parent: slC}); ink(flat, SL, CAT_T - 0.15, 0.22, 4, {parent: slI});
+  const cat = el('g', {}, flat.top); flat.top.insertBefore(cat, heroL);
+  const BODY = 'M-42 0 C-58 -6 -60 -32 -39 -41 C-15 -51 21 -50 39 -37 C50 -30 51 -10 44 0 Z', HEAD = O(55, -18, 20, 17);
+  const TAIL = 'M-51 -12 Q-53 1 -31.5 2 L31.5 1 Q46 0 49.5 -8 Q42 -4.5 31.5 -5.5 L-30 -5.5 Q-42 -5.5 -44 -13.5 Z';
+  el('path', {d: BODY}, el('clipPath', {id: 'catB'}, E.defs)); el('path', {d: HEAD}, el('clipPath', {id: 'catH'}, E.defs));
+  const G = (a = {}) => el('g', a, cat);
+  const bC = G(), bP = G({'clip-path': 'url(#catB)'}), bI = G(), eC = G(), eI = G(), hC = G(), hP = G({'clip-path': 'url(#catH)'}), hI = G(), tC = G(), tI = G();
+  const C = (d, t0, col, par) => clay(flat, d, t0, col, 3, 2, {parent: par}), I = (d, t0, dur, w, par) => ink(flat, d, t0, dur, w, {parent: par});
+  I(BODY, CAT_T, 0.35, 5, bI); C(BODY, CAT_T + 0.06, WHITE, bC);
+  C('M-34 -36 C-30 -60 20 -62 26 -44 C24 -32 2 -25 -16 -29 C-28 -31 -34 -33 -34 -36 Z', CAT_T + 0.4, CLAY, bP);       // рыжее пятно на спине
+  I('M-33 -8 Q-24 -22.5 -4.5 -20.7', CAT_T + 0.45, 0.12, 3, bI);                                                      // бедро
+  C('M40.5 -28 L43 -45 L55 -33 Z', CAT_T + 0.3, CLAY, eC); C('M57.6 -33 L68.4 -45 L72 -28 Z', CAT_T + 0.3, WHITE, eC);
+  I('M40.5 -28 L43 -45 L55 -33 M57.6 -33 L68.4 -45 L72 -28', CAT_T + 0.28, 0.12, 4, eI);                             // уши
+  I(HEAD, CAT_T + 0.22, 0.25, 4.5, hI); C(HEAD, CAT_T + 0.28, WHITE, hC);
+  C('M36 -28 C40 -42 56 -44 62 -34 C60 -26 48 -21 38 -23 Z', CAT_T + 0.45, CLAY, hP);                                  // пятно у уха
+  C(O(74, -13, 2.2), CAT_T + 0.55, CLAY2, hC);                                                                         // нос
+  I('M57 -19 Q62 -14.5 67.5 -19', CAT_T + 0.55, 0.1, 3, hI); I('M70 -9 L80 -11 M70 -6 L79 -2', CAT_T + 0.6, 0.1, 2, hI); // спит; усы
+  I(TAIL, CAT_T + 0.42, 0.3, 4, tI); C(TAIL, CAT_T + 0.48, WHITE, tC); C('M31.5 -5.5 Q42 -4.5 49.5 -8 Q46 0 31.5 1 Z', CAT_T + 0.6, CLAY, tC); // хвост обёрнут спереди
+  on((t) => { const s = Math.sin((t - CAT_T) * 2 * Math.PI * 0.4); cat.setAttribute('transform', `translate(${CX} ${CY}) scale(${(CS * (1 + 0.006 * s)).toFixed(4)} ${(CS * (1 + 0.03 * s)).toFixed(4)})`); });
+}
+
+// ══ Пометки ══
+const N = (x, y, txt, t0, o) => note(flat, x, y, txt, t0, {size: 62, parent: noteL, ...o});
+N(1150, 640, 'на час?', wChas, {size: 70, until: t3 - 0.2});
+N(1700, 640, 'на пару суток?', wPar, {size: 70, until: t3 - 0.2});
+N(140, 700, 'насосы — от сети', wNas, {size: 58, until: wNap + 0.7});
+N(1090, 620, 'скачок не страшен', wSka + 0.3, {size: 56, until: wOst - 0.3});
+N(1720, 560, 'вкл. — ждём свет', wDal - 0.45, {size: 56, until: t5 - 0.45});
+N(2228, 1000, '≈ 4 часа', wChe, {size: 64, until: wMor - 0.1});
+N(2228, 760, '≈ 2 суток', wMor, {size: 64, until: wKon - 0.1});
+N(2470, 600, 'консервы — потом', wKon, {size: 56, until: t6 - 0.1});
+N(2760, 600, 'без цвета и запаха', wUg, {size: 56, until: wSon - 0.15});
+N(2760, 600, 'во сне — опасен', wSon, {size: 60, until: t7 - 0.2});
+N(1640, 740, 'свет дали!', H2_PAN1 - 0.2, {size: 80});
+
+// ══ Часы — нить ролика: прошло 1 мин → 5 мин → 1 ч → 3 ч → 6 ч (без шторки) ══
+const CK = ui('clock');
+const STEPS = [[t3, 1], [t4, 5], [t5, 60], [t6, 180], [t7, 360]];
+const CLOCK_IN = wVar;
+const minutesAt = (t) => { let m = 0; STEPS.forEach(([ts, v], i) => { const prev = i ? STEPS[i - 1][1] : 0; if (t >= ts - 0.3) m = lerp(prev, v, EASE.io2(prog(t, ts - 0.3, ts + 0.35))); }); return m; };
+STEPS.forEach(([ts]) => sfx(ts - 0.2, 'file:foley/clock_tick.wav', {gain: 1}));
+on((t) => {
+  const a = EASE.o(prog(t, CLOCK_IN - 0.2, CLOCK_IN + 0.2)) * (1 - EASE.io2(prog(t, POWER2, POWER2 + 0.6)));
+  CK.style.opacity = a; show(CK, a > 0.01);
+  const m = minutesAt(t);
+  ui('ckM').setAttribute('transform', `rotate(${(m * 6).toFixed(1)} 540 384)`); ui('ckH').setAttribute('transform', `rotate(${(m * 0.5).toFixed(1)} 540 384)`);
+  const mm = Math.round(m); ui('ckT').textContent = mm < 1 ? 'свет погас' : mm < 60 ? `прошло ${mm} мин` : `прошло ${Math.round(mm / 60)} ч`;
+  // в «Бумаге» нет тёмной маски: под подписью часов — бумажная плашка, иначе её перечёркивают линии мира
+  if (a > 0.01) ui('ckBg').setAttribute('width', (ui('ckT').getComputedTextLength() + 28).toFixed(0));
+});
+// анонс: пять шагов значками на «пять», улетают в часы на «вариант»
+{
+  const icons = ui('icons');
+  [...icons.children].forEach((g, i) => on((t) => {
+    const q = EASE.back(clamp(prog(t, w5 + i * 0.18, w5 + i * 0.18 + 0.32))), out = EASE.io2(prog(t, CLOCK_IN - 0.3 + i * 0.04, CLOCK_IN + 0.1 + i * 0.04));
+    const x = +g.dataset.x, y = 1190, tx = lerp(x, 540, out), ty = lerp(y, 384, out), s = q * (1 - out * 0.8);
+    show(g, q > 0.001 && out < 0.999); g.setAttribute('transform', `translate(${tx.toFixed(1)} ${ty.toFixed(1)}) scale(${s.toFixed(3)})`);
+  }));
+}
+
+// ══ Камера: общий план комнаты → действие; между шагами — проезд вдоль пола (≈0,7 с) ══
+cam(t2 + 0.6, 1620, 880, 1.0);
+cam(t3 - 0.15, 1610, 884, 1.04);
+cam(t3 + 0.6, 560, 900, 1.12, {ease: 'io'});
+cam(wBut + 0.2, 560, 906, 1.16);
+cam(t4 - 0.15, 570, 904, 1.2);
+cam(t4 + 0.55, 1450, 900, 1.15, {ease: 'io'});
+cam(wSka + 0.4, 1460, 900, 1.17);
+cam(wOst + 0.1, 1690, 892, 1.15);
+cam(t5 - 0.4, 1700, 892, 1.2);
+cam(t5 + 0.3, 2460, 900, 1.14, {ease: 'io'});
+cam(t6 - 0.15, 2480, 900, 1.2);
+cam(t6 + 0.55, 2710, 900, 1.15);
+cam(t7 - 0.15, 2720, 900, 1.22);
+cam(t7 + 0.6, 1900, 900, 1.14, {ease: 'io'});
+cam(wZat + 0.6, 1905, 900, 1.18);
+cam(wOkno + 0.45, 1710, 896, 1.15);
+cam(t8 - 0.1, 1712, 896, 1.2);
+cam(H2_IN - 0.005, 1716, 897, 1.22);
+cam(H2_IN, 540, -1500 + 880, 1.06);              // врезка: дом ночью, окна загораются
+cam(H2_PAN0, 540, -1500 + 866, 1.1);
+cam(H2_PAN1, 1712, 896, 1.2, {ease: 'io'});      // вниз по выноске — в комнату
+cam(t9 - 0.05, 1730, 900, 1.28);
+cam(DUR, 1736, 900, 1.3);   // финал без отъезда: держим героя, закрываются шторы
+// стиль канала: тени крупных вещей штриховкой (тумба, диван, холодильник, плита, шкаф)
+if (CH) [[R(1236, 1104, 60, 142), roomT + 0.35], [R(1392, SEAT + 40, 376, 58), roomT + 0.95], [R(2402, 650, 34, 552), kitT + 0.4], [R(2986, 970, 28, 276), kitT + 1.2], [R(2452, 968, 262, 262), kitT + 0.7, 0.45]]
+  .forEach(([d, t, op = 1]) => hatch(flat, d, t, t + 0.35, {angle: -40, gap: 9, w: 1.8}).setAttribute('opacity', op));
+// ══ Финал — прощание: опускается ламбрекен, шторы в стиле канала закрываются (терракота, тушь, тени складок штриховкой) ══
+{
+  const G = ui('curt'), PT0 = t9 - 0.1, PT1 = t9 + 0.4, CT0 = t9 + 0.25, CT1 = t9 + 1.9, XC = 540, TOP = 236, BOT = 1462, NP = 6, NY = 20;
+  const hs = (a, b) => { const x = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return (x - Math.floor(x)) * 2 - 1; };
+  const P = (par, w, op = 1) => el('path', {fill: 'none', stroke: INK, 'stroke-width': w, opacity: op, 'stroke-linecap': 'round', 'stroke-linejoin': 'round'}, par);
+  const PL = (pts) => 'M' + pts.map((q) => F1(q[0]) + ' ' + F1(q[1])).join('L');
+  const YS = [...Array(NY + 1)].map((_, j) => TOP + ((BOT - TOP) * j) / NY);
+  const halves = [-1, 1].map((s) => {
+    const g = el('g', {}, G), id = s < 0 ? 'L' : 'R';
+    return {s, g, dir: -s, xs: s < 0 ? 22 : 1058, xc: XC - s * 7, pat: ui('curtTex' + id), base: el('path', {fill: `url(#curtTex${id})`}, g),
+      sh: [...Array(NP)].map(() => el('path', {fill: `url(#curtSh${id})`}, g)), hi: [...Array(NP)].map(() => el('path', {fill: 'url(#curtHi)'}, g)),
+      hat: P(g, 1.7, 0.75), fold: P(g, 2.4), fold2: P(g, 1.3, 0.5), edge: P(g, 3.6), edge2: P(g, 1.6, 0.6)};
+  });
+  // табличка канала (картинка владельца): шторы закрылись — опускается на двух шнурах из-под ламбрекена, пружинит, чуть качается и висит до конца
+  const UD = ui('ui').querySelector('defs'), QW = 720, QH = 332, QX = XC - QW / 2, QY = 668, QT0 = CT1 - 0.05, QA = [XC - 250, XC + 250];
+  el('feGaussianBlur', {stdDeviation: 9}, el('filter', {id: 'plqSh', x: '-10%', y: '-20%', width: '120%', height: '140%'}, UD));
+  el('path', {d: R(QX, QY, QW, QH, 10)}, el('clipPath', {id: 'plqClip'}, UD));
+  const qg = el('g', {}, G), qs = el('g', {}, qg);
+  el('path', {d: R(QX + 8, QY + 14, QW, QH, 10), fill: '#4A2414', opacity: 0.32, filter: 'url(#plqSh)'}, qs);
+  el('image', {href: TX('plaque_logo'), x: QX, y: QY, width: QW, height: QH, preserveAspectRatio: 'xMidYMid slice', 'clip-path': 'url(#plqClip)'}, qs);
+  const qInk = P(qs, 3), qInk2 = P(qs, 1.4, 0.55), qCord = P(qg, 2.4), qr = el('g', {}, qg);
+  QA.forEach((x) => el('circle', {cx: x, cy: QY + 24, r: 7, fill: 'none', stroke: INK, 'stroke-width': 2.4}, qr));
+  const spring = (d) => { const z = 0.75, w = 8, wd = w * Math.sqrt(1 - z * z); return Math.exp(-z * w * d) * (Math.cos(wd * d) + (z * w / wd) * Math.sin(wd * d)); };
+  // ламбрекен: пять фестонов, внутри — складки дугами и штриховка, на стыках — кисточки
+  const pg = el('g', {}, G), J = [40, 240, 440, 640, 840, 1040], YB = 352, DP = 80;
+  let pd = `M20 150V${YB}H40`; for (let i = 0; i < 5; i++) pd += `Q${J[i] + 100} ${YB + DP} ${J[i + 1]} ${YB}`; pd += 'H1060V150Z';
+  el('path', {d: pd, fill: 'url(#curtTexP)'}, pg); el('path', {d: pd, fill: CLAY2, opacity: 0.42}, pg);
+  const pFold = P(pg, 2.0, 0.85), pHat = P(pg, 1.6, 0.75), pInk = P(pg, 3.4), pInk2 = P(pg, 1.6, 0.6);
+  const tas = J.slice(1, 5).map((x) => {
+    const tg = el('g', {}, pg);
+    el('path', {d: `M${x} ${YB}V${YB + 20}`, fill: 'none', stroke: INK, 'stroke-width': 2.2}, tg);
+    el('path', {d: `M${x} ${YB + 18}C${x - 11} ${YB + 26} ${x - 11} ${YB + 46} ${x} ${YB + 52}C${x + 11} ${YB + 46} ${x + 11} ${YB + 26} ${x} ${YB + 18}Z`, fill: CLAY2, stroke: INK, 'stroke-width': 2.2}, tg);
+    el('path', {d: `M${x - 6} ${YB + 50}L${x - 7} ${YB + 62}M${x} ${YB + 52}V${YB + 64}M${x + 6} ${YB + 50}L${x + 7} ${YB + 62}`, fill: 'none', stroke: INK, 'stroke-width': 1.8, 'stroke-linecap': 'round'}, tg);
+    return {tg, x};
+  });
+  sfx(CT0 - 0.05, 'file:foley/curtain.wav', {gain: 1});
+  on((t) => {
+    const vis = t >= PT0; show(G, vis); if (!vis) return;
+    const fs = Math.floor(t * 12), u = prog(t, CT0, CT1), e = EASE.io2(u);   // «кипение» туши — 12 к/с, как у всего ролика
+    // низ ткани отстаёт на ходу и чуть проскакивает вперёд после остановки
+    const lag = t < CT1 ? 34 * Math.sin(Math.PI * u) : -14 * Math.exp(-(t - CT1) * 4.2) * Math.sin((t - CT1) * 12.5);
+    halves.forEach((H) => {
+      show(H.g, t >= CT0); if (t < CT0) return;
+      const xe = lerp(H.xs + H.dir * 34, H.xc, e), sp = Math.abs(xe - H.xs) / NP, wa = Math.min(1, sp / 60);   // старт сразу за краем панели
+      const X = (q, y, k) => H.xs + (xe - H.xs) * q - H.dir * lag * q * Math.pow((y - TOP) / (BOT - TOP), 1.4) + wa * (3 + 4 * q) * Math.sin(y * 0.0042 + q * 9 + H.s) + 0.7 * hs(fs, k * 53 + y * 0.01);
+      const line = (q, k, dx = 0) => YS.map((y) => [X(q, y, k) + dx, y]);
+      const strip = (qa, qb, k) => PL([...line(qa, k + 20), ...line(qb, k).reverse()]) + 'Z';
+      H.pat.setAttribute('patternTransform', `translate(${F1(xe - H.xc)} 0)`);
+      H.base.setAttribute('d', PL([[H.xs - H.dir * 40, TOP], ...line(1, NP), [H.xs - H.dir * 40, BOT]]) + 'Z');
+      let fd = '', f2 = '', hd = '';
+      const hl = Math.min(15, sp * 0.42);
+      for (let k = 1; k <= NP; k++) {
+        const q = k / NP;
+        H.sh[k - 1].setAttribute('d', strip(q - 0.42 / NP, q, k));
+        H.hi[k - 1].setAttribute('d', strip(q - 0.86 / NP, q - 0.56 / NP, k + 60));
+        if (k < NP) { fd += PL(line(q, k)); if (k % 2) f2 += PL(line(q, k + 40, 2.2 * H.dir)); }
+        for (let j = 0, y = TOP + 150 + (k % 2) * 11; y < BOT - 10; j++, y += 23) if (hs(k, j) > -0.3) {
+          const xk = X(q, y, k); hd += `M${F1(xk - H.dir * (hl + 4))} ${F1(y + 8 + 0.6 * hs(fs, k * 7 + j))}L${F1(xk - H.dir * 4)} ${F1(y - 7)}`;
+        }
+      }
+      H.fold.setAttribute('d', fd); H.fold2.setAttribute('d', f2); H.hat.setAttribute('d', hd);
+      H.edge.setAttribute('d', PL(line(1, NP))); H.edge2.setAttribute('d', PL(line(1, NP + 30, -2.6 * H.dir)));
+    });
+    show(qg, t >= QT0);
+    if (t >= QT0) {
+      const d = t - QT0, dy = -780 * spring(d), dx = 9 * Math.exp(-d * 1.8) * Math.sin(d * 6.5), tr = `translate(${F1(dx)} ${F1(dy)})`, jq = (k) => 0.7 * hs(fs, 300 + k);
+      qs.setAttribute('transform', tr); qr.setAttribute('transform', tr);
+      qCord.setAttribute('d', QA.map((x, i) => `M${x} 200L${F1(x + dx / 2 + jq(i))} ${F1((200 + QY + 17 + dy) / 2)}L${F1(x + dx)} ${F1(QY + 17 + dy)}`).join(''));
+      qInk.setAttribute('d', R(QX + jq(2), QY + jq(3), QW + jq(4), QH + jq(5), 10));
+      qInk2.setAttribute('d', R(QX + 4 + jq(6), QY + 3 + jq(7), QW - 7 + jq(8), QH - 5 + jq(9), 9));
+    }
+    // ламбрекен опускается с лёгким отскоком, кисточки качаются
+    const pu = prog(t, PT0, PT1);
+    pg.setAttribute('transform', `translate(0 ${F1(-190 * (1 - EASE.back(pu)))})`);
+    const jb = (i) => 0.8 * hs(fs, i);
+    let pb = `M20 ${F1(YB + jb(1))}H40`, pb2 = `M22 ${F1(YB + 2 + jb(2))}H40`, pf = `M20 ${F1(YB - 50 + jb(3))}H1060`, ph = '';
+    for (let i = 0; i < 5; i++) {
+      const a = J[i], m = a + 100, b = J[i + 1];
+      pb += `Q${F1(m + jb(10 + i))} ${F1(YB + DP + jb(20 + i))} ${b} ${F1(YB + jb(30 + i))}`;
+      pb2 += `Q${F1(m + 3 + jb(40 + i))} ${F1(YB + DP - 3 + jb(50 + i))} ${b} ${F1(YB + 2 + jb(60 + i))}`;
+      pf += `M${a + 10} ${F1(YB - 16 + jb(70 + i))}Q${F1(m + jb(80 + i))} ${F1(YB + 40 + jb(90 + i))} ${b - 10} ${F1(YB - 16 + jb(100 + i))}`;
+      pf += `M${a + 24} ${F1(YB - 34 + jb(110 + i))}Q${F1(m + jb(120 + i))} ${F1(YB + 2 + jb(130 + i))} ${b - 24} ${F1(YB - 34 + jb(140 + i))}`;
+      for (let k = 0; k < 7; k++) { const q = 0.2 + k * 0.1, x = a + 200 * q, y = YB + 2 * DP * q * (1 - q);
+        ph += `M${F1(x - 7 + jb(150 + i * 7 + k))} ${F1(y - 5)}L${F1(x + 5)} ${F1(y - 19 + jb(200 + i * 7 + k))}`; }
+    }
+    pInk.setAttribute('d', pb + 'H1060'); pInk2.setAttribute('d', pb2 + 'H1058'); pFold.setAttribute('d', pf); pHat.setAttribute('d', ph);
+    const sw = pu > 0 ? 7 * Math.exp(-Math.max(0, t - PT1) * 3) * Math.sin((t - PT0) * 9) : 0;
+    tas.forEach(({tg, x}) => tg.setAttribute('transform', `rotate(${F1(sw)} ${x} ${YB})`));
+  });
+}
+E.cams.sort((a, b) => a.t - b.t);
+// тонкая тушь и у движущихся вещей: их контуры заданы прямо в SVG
+for (const r of [dynL, itemL]) r.querySelectorAll('[stroke-width]').forEach((n) => n.setAttribute('stroke-width', (+n.getAttribute('stroke-width') * 0.6).toFixed(2)));
+const J3 = offAt(X2, t3 - 0.2, t3 + 1.2), J4 = offAt(XB, t4 - 0.2, t4 + 1.2), J5 = offAt(XL, t5 - 0.4, t5 + 1.2), J7 = offAt(XF2, t7 - 0.2, t7 + 1.2);
+you.keys(seq([
+  [0, {x: X2, y: FL, pose: 'stand', look: -1, vis: 0, fade: 1, mouth: 0, breath: 0, sweater: 0}],
+  ...drawIn(t2 + 0.3, t2 + 0.85), [wPar - 0.08, {look: -1}], [wPar - 0.04, {look: 1}],
+  // шаг 1 — вода
+  ...jump(J3, {x: XB, look: -1, pose: 'stand'}), ...drawIn(J3 + 0.03, J3 + 0.48),
+  [wNab - 0.28, {pose: 'stand'}], [PLUG_T - 0.02, {pose: 'reachLow'}], [wNab + 0.16, {pose: 'reachLow'}], [TAP - 0.06, {pose: 'reach'}], [TAP + 0.4, {pose: 'reach'}], [TAP + 0.65, {pose: 'stand'}],
+  [wBut + 0.32, {pose: 'stand'}], [wBut + 0.65, {pose: 'kneel'}], [wBut + 0.9, {pose: 'kneelLow'}], [wNas - 0.45, {pose: 'kneelLow'}], [wNas - 0.12, {pose: 'kneel'}], [wNas + 0.22, {pose: 'stand'}],
+  // шаг 2 — розетки и лампа
+  ...jump(J4, {x: XO, look: -1, pose: 'kneelLow'}), ...drawIn(J4 + 0.03, J4 + 0.45),
+  [wRoz - 0.25, {pose: 'kneelLow'}], [wRoz + 0.0, {pose: 'pull'}], [wRoz + 0.55, {pose: 'pull'}], [wRoz + 0.75, {pose: 'kneel'}], [wRoz + 1.15, {pose: 'stand'}],
+  [wSka + 0.4, {look: -1}], [wSka + 0.44, {look: 1}], [wSka + 0.5, {x: XO}], [wOst - 0.25, {x: XL}],
+  [wOst - 0.22, {pose: 'stand'}], [wOst - 0.02, {pose: 'reachLow'}], [wOst + 0.6, {pose: 'reachLow'}], [wOst + 0.9, {pose: 'stand'}],
+  // шаг 3 — еда
+  ...jump(J5, {x: XF, look: -1, pose: 'stand'}), ...drawIn(J5 + 0.02, J5 + 0.33),
+  [wHol - 0.3, {pose: 'stand'}], [wHol - 0.08, {pose: 'reachLow'}], [wHol + 0.15, {pose: 'reachLow'}], [wHol + 0.35, {pose: 'stand'}],
+  [wHol + 0.45, {pose: 'stand'}], [wHol + 0.68, {pose: 'reachLow'}], [wHol + 0.82, {pose: 'reachLow'}], [wHol + 1.1, {pose: 'carry'}],
+  [wHol + 1.75, {pose: 'carry'}], [wHol + 2.1, {pose: 'place'}], [wHol + 2.3, {pose: 'place'}], [wHol + 2.6, {pose: 'stand'}],
+  [wOtk - 0.25, {pose: 'stand'}], [wOtk + 0.0, {pose: 'reach'}], [wOtk + 0.8, {pose: 'reach'}], [wOtk + 1.1, {pose: 'stand'}],
+  [wKon - 0.25, {pose: 'stand'}], [wKon + 0.02, {pose: 'reachUp'}], [wKon + 0.45, {pose: 'reachUp'}], [wKon + 0.75, {pose: 'stand'}],
+  // шаг 4 — плита: поворот к плите (сдвиг на XF2 — внутри поворота, без шага); чирк спичкой о коробок → дальняя конфорка под чайник → ближняя → руки над огнём → «стоп»
+  [t6 + 0.01, {pose: 'stand'}], [t6 + 0.03, {look: -1}], [t6 + 0.07, {look: 1, x: XF2}],
+  [M_ON - 0.02, {pose: PH_STR}], [M_ON + 0.06, {pose: PH_STR}], [KET_ON - 0.1, {pose: PH_LF}], [KET_ON + 0.16, {pose: PH_LF, breath: 1}], [KET_ON + 0.48, {pose: PH_S}],
+  [WRM_ON - 0.32, {pose: PH_S}], [WRM_ON - 0.08, {pose: PH_L}], [WRM_ON + 0.12, {pose: PH_L}], [wGaz + 0.62, {pose: 'warm'}], [wNe - 0.15, {pose: 'warm'}], [wNe + 0.12, {pose: 'stop'}], [wUg + 0.2, {pose: 'stop'}], [wUg + 0.55, {pose: 'stand'}],
+  // шаг 5 — тепло в одной комнате
+  ...jump(J7, {x: XD1, look: 1, pose: 'stand', breath: 1}), ...drawIn(J7 + 0.03, J7 + 0.48),
+  [wZak - 0.2, {pose: 'stand'}], [wZak + 0.02, {pose: 'reach'}], [wZak + 0.35, {pose: 'reach'}], [wZak + 0.6, {pose: 'stand'}],
+  [wZak + 0.62, {x: XD1}], [wShch - 0.02, {x: XD2}],
+  [wShch, {pose: 'stand'}], [wShch + 0.32, {pose: 'kneel'}], [wShch + 0.52, {pose: 'kneelFloor'}], [wZat + 0.25, {pose: 'kneelFloor'}], [wZat + 0.5, {pose: 'kneel'}], [wZat + 0.85, {pose: 'stand'}],
+  [wZat + 0.88, {look: 1}], [wZat + 0.92, {look: -1}], [wZat + 0.95, {x: XD2}], [wOkno + 0.3, {x: XC}],
+  [wOkno + 0.32, {pose: 'stand'}], [wOkno + 0.5, {pose: 'reachUp'}], [wOkno + 0.95, {pose: 'reachUp'}], [wOkno + 1.15, {pose: 'stand'}],
+  [wSvi - 0.3, {pose: 'stand'}], [wSvi - 0.08, {pose: 'armsUp', sweater: 0}], [wSvi + 0.35, {pose: 'armsUp', sweater: 1}], [wSvi + 0.55, {pose: 'stand'}],
+  [wSvi + 0.6, {look: -1}], [wSvi + 0.64, {look: 1}], [wChai - 0.55, {pose: 'stand'}], [wChai - 0.12, {pose: 'sit'}], [wChai + 0.05, {pose: 'sit'}], [wChai + 0.25, {pose: 'sitHug', breath: 0.4}],
+  // свет дали
+  [POWER2 + 0.3, {breath: 0}], [wLuch - 0.25, {mouth: 0}], [wLuch + 0.05, {mouth: 1}], [DUR, {}],
+]));
+E.start();
+</script>
+</body></html>

@@ -1,0 +1,454 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<title>Блэкаут зимой — тушь и глина</title>
+<style>
+  @font-face { font-family: 'Hand'; src: url('fonts/Caveat.ttf'); font-weight: 400 700; }
+  :root { --ink: #141413; --clay: #D97757; --olive: #788C5D; --sky: #6A9BCC; --paper: #F4F2EB; --serif: Georgia, serif; }
+  html, body { margin: 0; width: 1080px; height: 1920px; overflow: hidden; background: var(--paper); }
+  #stage { position: absolute; inset: 0; transform-origin: 50% 50%; }
+  svg { position: absolute; inset: 0; }
+</style>
+<script src="camlife.js"></script><script src="sfx.js"></script><script src="lib/oneline.js"></script><script src="lib/brush.js"></script><script src="lib/inkclay.js"></script>
+</head><body>
+<div id="stage">
+<svg id="svg" width="1080" height="1920" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="paperPat" width="512" height="512" patternUnits="userSpaceOnUse"><rect width="512" height="512" fill="#F4F2EB"/><rect width="512" height="512" filter="url(#fibre)"/></pattern>
+    <filter id="fibre" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency=".9 .3" numOctaves="3" seed="6"/><feColorMatrix values="0 0 0 0 .42  0 0 0 0 .37  0 0 0 0 .3  0 0 0 .2 0"/></filter>
+    <filter id="inkRough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="1.5"/></filter>
+    <filter id="clayTex" x="-5%" y="-5%" width="110%" height="110%">
+      <feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="11" result="w"/><feDisplacementMap in="SourceGraphic" in2="w" scale="5" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="9" result="n"/><feColorMatrix in="n" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .32 0" result="g"/>
+      <feComposite in="g" in2="d" operator="in" result="gi"/><feBlend in="d" in2="gi" mode="multiply"/>
+    </filter>
+  </defs>
+  <g id="world"></g>
+</svg>
+</div>
+<svg id="ui" width="1080" height="1920" viewBox="0 0 1080 1920" style="position:absolute;inset:0;pointer-events:none">
+  <defs><linearGradient id="band" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4F2EB" stop-opacity="0"/><stop offset=".2" stop-color="#F4F2EB"/></linearGradient>
+  <linearGradient id="bandT" x1="0" y1="0" x2="0" y2="1"><stop offset=".75" stop-color="#F4F2EB"/><stop offset="1" stop-color="#F4F2EB" stop-opacity="0"/></linearGradient></defs>
+  <rect x="0" y="1340" width="1080" height="580" fill="url(#band)"/>
+  <rect x="0" y="0" width="1080" height="300" fill="url(#bandT)"/>
+  <g id="hdg" font-family="Georgia" font-size="36"></g>
+  <path id="hl" d="M90 232 H990" stroke="#141413" stroke-width="2" fill="none"/>
+  <g id="mk"></g>
+  <g id="caps" font-family="Georgia" fill="#141413" text-anchor="middle" font-weight="700"></g>
+</svg>
+<script>
+const {cam, sfx, el, on, EASE, prog, clamp} = E;
+const TL = (() => { const x = new XMLHttpRequest(); x.open('GET', 'data/blackout_winter.timings.json', false); x.send(); return JSON.parse(x.responseText); })();
+const T = Object.fromEntries(TL.map((s) => [s.id, s.start]));
+const END = TL[TL.length - 1].start + TL[TL.length - 1].dur, DUR = END + 0.8;
+E.init({dur: DUR});
+const B = BRUSH(E), K = INKCLAY(E, B);
+const INK = '#141413', CLAY = '#D97757', CLAY2 = '#B4553A', SKIN = '#EFC9A8', SKY = '#6A9BCC', SKY2 = '#4E7DB0', OLIVE = '#788C5D', SAND = '#E9C46A', NIGHT = '#33476E', PAPER = '#F4F2EB';
+const R = (x, y, w, h, r = 0) => r ? `M${x + r} ${y}H${x + w - r}Q${x + w} ${y} ${x + w} ${y + r}V${y + h - r}Q${x + w} ${y + h} ${x + w - r} ${y + h}H${x + r}Q${x} ${y + h} ${x} ${y + h - r}V${y + r}Q${x} ${y} ${x + r} ${y}Z` : `M${x} ${y}H${x + w}V${y + h}H${x}Z`;
+const O = (cx, cy, rx, ry = rx) => `M${cx - rx} ${cy}a${rx} ${ry} 0 1 0 ${2 * rx} 0a${rx} ${ry} 0 1 0 ${-2 * rx} 0`;
+const {ink, clay, hatch, note} = K;
+const lerp = (a, b, u) => a + (b - a) * u;
+
+// ══ Экранный слой: шапка правила и подпись с маркером на сцену ═════════
+const ui = (id) => document.getElementById(id);
+const UB = BRUSH({...E, lineLayer: ui('mk'), defs: ui('ui').querySelector('defs'), on: (f) => E.on(f)});
+const HEAD = [[0, 'БЛЭКАУТ ЗИМОЙ', ''], [T.s02, 'ПРАВИЛО 1 ИЗ 5', 'холодильник'], [T.s05, 'ПРАВИЛО 2 ИЗ 5', 'розетки'], [T.s08, 'ПРАВИЛО 3 ИЗ 5', 'плита'], [T.s10, 'ПРАВИЛО 4 ИЗ 5', 'тепло'], [T.s12, 'ПРАВИЛО 5 ИЗ 5', 'вода'], [T.s14, 'БЛЭКАУТ ЗИМОЙ', '']];
+const heads = HEAD.map(([t0, a, b], i) => {
+  const g = el('g', {}, ui('hdg'));
+  el('text', {x: 90, y: 200, fill: '#788C5D', 'letter-spacing': 7}, g).textContent = a;
+  el('text', {x: 990, y: 200, 'text-anchor': 'end', 'font-style': 'italic', fill: INK}, g).textContent = b;
+  return {g, t0, t1: (HEAD[i + 1] || [DUR + 1])[0]};
+});
+const CAPS = {s01: ['Во всём доме', 'погас свет'], s02: ['Холодильник', 'не открывай'], s03: ['Закрытый держит холод', '4 часа'], s04: ['Полная морозилка —', 'двое суток'],
+  s05: ['Технику выдерни', 'из розеток'], s06: ['Свет вернётся скачком —', 'может сгореть'], s07: ['Одну лампу', 'оставь включённой'], s08: ['Газовой плитой', 'не греться'],
+  s09: ['Без цвета и запаха.', 'Во сне — не проснуться'], s10: ['Все в одну комнату,', 'двери закрыть'], s11: ['Щель под дверью —', 'полотенцем'], s12: ['Набери воды,', 'пока она идёт'],
+  s13: ['Насосы без света —', 'наверх не дойдёт'], s14: ['Сохрани,', 'пока свет есть']};
+const caps = TL.map((s) => {
+  const [a, b] = CAPS[s.id], g = el('g', {}, ui('caps'));
+  const c1 = el('text', {x: 540, y: 1486, 'font-size': 74}, g); c1.textContent = a;
+  const big = Math.min(104, Math.round(880 / (b.length * 0.6))); // курсив Georgia ≈ 0.6 em на знак
+  const c2 = el('text', {x: 540, y: 1600, 'font-size': big, 'font-style': 'italic'}, g); c2.textContent = b;
+  const t0 = s.start, t1 = s.start + s.dur;
+  const w = Math.min(900, b.length * big * 0.58 + 60);
+  UB.stroke(`M${540 - w / 2} 1572 C${540 - w / 4} 1566 ${540 + w / 4} 1570 ${540 + w / 2} 1562`, t0 + 0.25, t0 + 0.55, {w: 88, color: 'rgba(217,119,87,0.62)', taper: [0.03, 0.06], until: t1 - 0.02, fade: (t) => 1 - EASE.io2(prog(t, t1 - 0.18, t1))});
+  sfx(t0 + 0.25, 'swish', {gain: 0.18});
+  return {g, c1, c2, t0, t1};
+});
+on((t) => {
+  heads.forEach((h) => { const a = EASE.o(prog(t, h.t0, h.t0 + 0.3)) * (1 - EASE.io2(prog(t, h.t1 - 0.2, h.t1))); h.g.style.opacity = a; h.g.style.display = a > 0.001 ? '' : 'none'; });
+  const hl = ui('hl'), L = hl.__L || (hl.__L = hl.getTotalLength()); hl.style.strokeDasharray = L; hl.style.strokeDashoffset = L * (1 - EASE.io2(prog(t, 0.05, 0.6)));
+  caps.forEach((c) => {
+    const vis = t >= c.t0 && t <= c.t1; c.g.style.display = vis ? '' : 'none'; if (!vis) return;
+    const out = 1 - EASE.io2(prog(t, c.t1 - 0.18, c.t1));
+    const q1 = EASE.o(prog(t, c.t0, c.t0 + 0.3)); c.c1.style.opacity = q1 * out; c.c1.setAttribute('transform', `translate(0 ${((1 - q1) * 26).toFixed(1)})`);
+    const q2 = clamp(prog(t, c.t0 + 0.42, c.t0 + 0.75)), k2 = EASE.back(q2); c.c2.style.opacity = Math.min(1, q2 * 3) * out;
+    c.c2.setAttribute('transform', `translate(540 1565) scale(${(1.3 - 0.3 * k2).toFixed(3)}) translate(-540 -1565)`);
+  });
+});
+
+// ══ A. Дом гаснет (s01) ═══════════════════════════════════════════════
+{
+  const sc = K.place(0, 0, T.s02 + 0.05);
+  clay(sc, R(110, 320, 860, 930, 18), 0, NIGHT, 0, 0, {quiet: true});
+  clay(sc, O(830, 430, 44), 0.05, PAPER, 0, 0, {quiet: true});
+  ink(sc, O(830, 430, 44), 0.05, 0.25, 4);
+  note(sc, 150, 470, '−20°', 0.4, {size: 96, color: PAPER});
+  const snow = el('g', {}, sc.top);
+  for (let i = 0; i < 40; i++) el('circle', {cx: 130 + ((i * 113) % 820), cy: 340 + ((i * 71) % 900), r: 2.5 + (i % 3), fill: PAPER, opacity: 0.85}, snow);
+  on((t) => [...snow.children].forEach((c, i) => c.setAttribute('transform', `translate(${Math.sin(t + i) * 6} ${((t * 45 + i * 13) % 90) - 45})`)));
+  ink(sc, 'M300 1250 V440 H780 V1250', 0.0, 0.6, 8);
+  ink(sc, 'M280 440 H800 M470 1250 V1170 H610 V1250 M450 1170 H630', 0.4, 0.3, 5);
+  const ours = {r: 6, c: 2};
+  for (let r = 0; r < 9; r++) for (let c = 0; c < 5; c++) {
+    const x = 330 + c * 92, y = 470 + r * 78, d = R(x, y, 56, 50, 4), me = r === ours.r && c === ours.c;
+    const off = me ? 3.05 : 1.25 + r * 0.14 + c * 0.03;
+    clay(sc, d, 0.1 + (r * 5 + c) * 0.006, SAND, 0, 0, {quiet: true, out: off});
+    ink(sc, d, 0.15 + (r * 5 + c) * 0.006, 0.18, 3);
+    if (me) hatch(sc, d, 3.1, 3.4, {angle: -40, gap: 8, w: 2.2});
+    if (c === 0) sfx(off, 'click', {gain: 0.18});
+  }
+  ink(sc, 'M80 1250 H1000', 0.3, 0.4, 4);
+  hatch(sc, 'M80 1252 H1000 V1300 H80 Z', 0.5, 0.9, {angle: -40, gap: 10, w: 2});
+  ink(sc, 'M110 1250 C170 1222 240 1226 300 1250 M780 1250 C840 1220 920 1226 980 1250', 0.6, 0.3, 4);
+  sfx(0.0, 'paper', {dur: 0.7, gain: 0.25}); sfx(3.05, 'downer', {dur: 0.6, gain: 0.3});
+  cam(0.0, 540, 860, 1.0);
+  cam(2.7, 540, 880, 1.08);
+  cam(T.s02 - 0.05, 542, 1000, 2.6, {ease: 'i'});
+}
+
+// ══ B. Холодильник (s02–s04) ═════════════════════════════════════════
+{
+  const Y = 2000, sc = K.place(Y, T.s02 - 0.05, T.s05 + 0.05), t2 = T.s02, t3 = T.s03, t4 = T.s04;
+  clay(sc, R(330, 300, 420, 960, 34), t2 + 0.1, '#ECE3D1', 7, 6, {quiet: true});
+  ink(sc, R(330, 300, 420, 960, 34), t2, 0.5, 8);
+  ink(sc, 'M330 560 H750', t2 + 0.3, 0.2, 5);
+  ink(sc, R(696, 390, 20, 120, 9) + R(696, 610, 20, 220, 9), t2 + 0.4, 0.25, 4);
+  ink(sc, 'M370 1260 V1290 M710 1260 V1290', t2 + 0.45, 0.15, 6);
+  [[420, 380, CLAY], [470, 420, OLIVE], [400, 450, SKY]].forEach(([x, y, c], i) => clay(sc, R(x, y, 34, 34, 8), t2 + 0.5 + i * 0.05, c, 4, 3, {quiet: i > 0}));
+  ink(sc, 'M80 1290 H1000', t2 + 0.2, 0.3, 4);
+  hatch(sc, 'M340 1292 H760 L800 1330 H350 Z', t2 + 0.4, t2 + 0.7, {angle: -40, gap: 9, w: 2});
+  // рука тянется к ручке — и отдёргивается
+  const arm = el('g', {}, sc.ink), armC = el('g', {}, sc.clay);
+  ink(sc, 'M1120 700 C980 690 860 700 760 704 M1120 790 C980 784 860 778 762 768', t2 + 0.15, 0.3, 6, {parent: arm});
+  clay(sc, 'M1120 700 C980 690 860 700 760 704 L762 768 C860 778 980 784 1120 790 Z', t2 + 0.2, CLAY, 8, 6, {parent: armC, quiet: true});
+  ink(sc, 'M760 704 C730 696 708 706 700 720 C694 732 702 742 714 740 C704 750 708 762 722 760 C716 772 728 778 740 772 C748 776 758 772 762 768', t2 + 0.3, 0.25, 4.5, {parent: arm});
+  clay(sc, 'M760 704 C730 696 708 706 700 720 C694 732 702 742 714 740 C704 750 708 762 722 760 C716 772 728 778 740 772 C748 776 758 772 762 768 Z', t2 + 0.32, SKIN, 5, 4, {parent: armC, quiet: true});
+  on((t) => { const inn = EASE.o(prog(t, t2 + 0.1, t2 + 0.7)), back = EASE.back(clamp(prog(t, t2 + 1.05, t2 + 1.5))); const x = (1 - inn) * 360 + back * 420; [arm, armC].forEach((g) => g.setAttribute('transform', `translate(${x.toFixed(1)} 0)`)); });
+  note(sc, 780, 600, 'нет!', t2 + 1.0, {size: 88, until: t3});
+  sfx(t2 + 1.05, 'thud', {gain: 0.3});
+  // разрез: внутри холод, полки, еда; часы — 4 часа
+  clay(sc, R(366, 596, 348, 630, 16), t3 + 0.15, SKY, 0, 0, {op: 0.32, quiet: true});
+  ink(sc, 'M366 760 H714 M366 930 H714 M366 1090 H714', t3, 0.35, 3.5);
+  ink(sc, R(392, 676, 40, 84, 10) + 'M402 676 V660 H422 V676', t3 + 0.2, 0.2, 3.5); clay(sc, R(392, 676, 40, 84, 10), t3 + 0.22, SKY2, 4, 3);
+  ink(sc, 'M470 760 V690 L496 668 L522 690 V760 Z M470 690 H522', t3 + 0.25, 0.2, 3.5); clay(sc, 'M470 760 V690 L496 668 L522 690 V760 Z', '#FBF6EA', t3 + 0.27, 4, 3, {quiet: true});
+  ink(sc, R(560, 870, 90, 60, 14), t3 + 0.3, 0.2, 3.5); clay(sc, R(560, 870, 90, 60, 14), CLAY, t3 + 0.32, 4, 3, {quiet: true});
+  ink(sc, 'M400 930 L470 870 L520 930 Z', t3 + 0.35, 0.2, 3.5); clay(sc, 'M400 930 L470 870 L520 930 Z', SAND, t3 + 0.37, 4, 3, {quiet: true});
+  ink(sc, R(420, 1030, 180, 56, 26), t3 + 0.4, 0.2, 3.5); clay(sc, R(420, 1030, 180, 56, 26), CLAY2, t3 + 0.42, 4, 3, {quiet: true});
+  ink(sc, O(190, 700, 82), t3 + 0.1, 0.35, 6, {until: t4});
+  for (let i = 0; i < 12; i++) { const a = (i / 12) * Math.PI * 2; ink(sc, `M${190 + Math.sin(a) * 68} ${700 - Math.cos(a) * 68} L${190 + Math.sin(a) * 78} ${700 - Math.cos(a) * 78}`, t3 + 0.3 + i * 0.01, 0.06, 3, {until: t4}); }
+  const hand = el('path', {d: 'M190 700 V636', stroke: CLAY, 'stroke-width': 8, 'stroke-linecap': 'round'}, sc.top);
+  on((t) => { hand.style.display = t > t3 + 0.3 && t < t4 ? '' : 'none'; hand.setAttribute('transform', `rotate(${(EASE.io2(prog(t, t3 + 0.5, t3 + 2.2)) * 120).toFixed(1)} 190 700)`); });
+  note(sc, 100, 860, '≈ 4 часа', t3 + 0.6, {size: 76, until: t4});
+  sfx(t3 + 0.5, 'tick', {}); sfx(t3 + 1.0, 'tick', {}); sfx(t3 + 1.5, 'tick', {}); sfx(t3 + 2.0, 'tick', {});
+  // морозилка: забита — 48 часов
+  clay(sc, R(366, 330, 348, 214, 16), t4 + 0.05, SKY2, 0, 0, {op: 0.45, quiet: true});
+  [[384, 350, 90, 70], [486, 350, 110, 70], [606, 350, 90, 70], [384, 430, 130, 90], [526, 430, 80, 90], [618, 430, 78, 90]].forEach(([x, y, w, h], i) => { ink(sc, R(x, y, w, h, 6), t4 + 0.1 + i * 0.05, 0.15, 3.5); clay(sc, R(x, y, w, h, 6), i % 2 ? '#FBF6EA' : SKY, t4 + 0.12 + i * 0.05, 3, 2, {quiet: i > 0}); });
+  note(sc, 360, 250, '48 ч', t4 + 0.5, {size: 110});
+  note(sc, 560, 240, 'если полная', t4 + 0.8, {size: 50});
+  cam(t2, 540, Y + 800, 1.05);
+  cam(t2 + 0.9, 660, Y + 730, 1.4);
+  cam(t3, 470, Y + 820, 1.02);
+  cam(t4 - 0.1, 470, Y + 800, 1.0);
+  cam(t4 + 0.6, 560, Y + 520, 1.5);
+  cam(T.s05 - 0.35, 560, Y + 560, 1.55);
+}
+
+// ══ переход: шнур холодильника ведёт к розеткам ═════════════════════
+{
+  const sc = K.place(0, T.s05 - 0.5, T.s05 + 1.2);
+  ink(sc, 'M740 3260 C760 3420 640 3600 600 3760 C570 3880 560 4000 545 4160', T.s05 - 0.45, 0.6, 5);
+  cam(T.s05 + 0.05, 560, 4000 + 800, 1.3, {ease: 'io'});
+  sfx(T.s05 - 0.45, 'whoosh', {dur: 0.5, gain: 0.3});
+}
+
+// ══ C. Розетки и лампа (s05–s07) ═════════════════════════════════════
+{
+  const Y = 4000, sc = K.place(Y, T.s05 - 0.3, T.s08 + 0.05), t5 = T.s05, t6 = T.s06, t7 = T.s07;
+  ink(sc, 'M545 160 V760', t5 - 0.1, 0.4, 5);
+  ink(sc, 'M60 1180 H1020', t5, 0.35, 4);
+  hatch(sc, 'M60 1182 H1020 V1220 H60 Z', t5 + 0.1, t5 + 0.4, {angle: -40, gap: 10, w: 2});
+  clay(sc, R(470, 760, 150, 90, 14), '#FBF6EA', t5 + 0.05, 4, 3, {quiet: true});
+  ink(sc, R(470, 760, 150, 90, 14), t5 + 0.05, 0.25, 5);
+  ink(sc, O(510, 805, 24) + O(580, 805, 24), t5 + 0.2, 0.2, 3.5);
+  // телевизор на тумбе
+  ink(sc, R(100, 900, 300, 280, 10) + 'M100 1000 H400 M250 1000 V1180', t5 + 0.15, 0.35, 5);
+  ink(sc, R(120, 600, 260, 190, 12) + 'M250 790 V860 M190 900 L250 860 L310 900', t5 + 0.25, 0.35, 5);
+  hatch(sc, R(136, 616, 228, 158, 8), t5 + 0.35, t5 + 0.6, {angle: -30, gap: 10, w: 2});
+  // лампа на столике — её оставим включённой
+  ink(sc, 'M760 900 H990 M780 900 V1180 M970 900 V1180', t5 + 0.2, 0.3, 5);
+  ink(sc, 'M800 660 L940 660 L905 540 L835 540 Z M870 660 V860 M820 892 C840 870 900 870 920 892 Z', t5 + 0.3, 0.35, 5);
+  clay(sc, 'M800 660 L940 660 L905 540 L835 540 Z', SAND, t5 + 0.4, 6, 5);
+  // вилки и провода: провод телевизора тянется за вилкой
+  const plug1 = el('g', {}, sc.clay), cord1 = el('path', {fill: 'none', stroke: INK, 'stroke-width': 5, 'stroke-linecap': 'round'}, sc.ink);
+  el('path', {d: R(-20, -22, 40, 46, 7), fill: '#3E4A5E', stroke: INK, 'stroke-width': 3}, plug1);
+  ink(sc, 'M580 830 C600 940 700 960 760 980 C820 1000 860 960 870 892', t5 + 0.35, 0.3, 5);
+  clay(sc, R(560, 783, 40, 46, 7), '#3E4A5E', t5 + 0.3, 0, 0, {quiet: true});
+  const hand5 = el('g', {}, sc.ink), hand5c = el('g', {}, sc.clay);
+  const SLV = 'M900 420 C800 520 640 640 556 724 L600 766 C690 690 840 580 960 470 Z', FIST = 'M528 742 C540 722 576 716 598 732 C614 744 614 770 600 786 C586 800 556 804 536 794 C516 784 512 760 528 742 Z';
+  ink(sc, 'M900 420 C800 520 640 640 556 724 M960 470 C840 580 690 690 600 766 M548 716 L608 772', t5 + 0.5, 0.25, 6, {parent: hand5});
+  ink(sc, FIST + ' M546 748 C560 744 572 750 576 760 M542 764 C556 760 568 766 572 776', t5 + 0.55, 0.25, 4.5, {parent: hand5});
+  clay(sc, SLV, CLAY, t5 + 0.55, 8, 6, {parent: hand5c, quiet: true});
+  clay(sc, FIST, SKIN, t5 + 0.6, 5, 4, {parent: hand5c, quiet: true});
+  on((t) => {
+    const pull = EASE.back(clamp(prog(t, t5 + 1.05, t5 + 1.4)));
+    const px = 510 - pull * 120, py = 805 + pull * 150, rot = pull * -35;
+    plug1.setAttribute('transform', `translate(${px} ${py}) rotate(${rot})`); plug1.style.display = t > t5 + 0.25 ? '' : 'none';
+    const sw = Math.sin((t - t5 - 1.3) * 9) * 20 * Math.exp(-Math.max(0, t - t5 - 1.3) * 2.5) * (t > t5 + 1.3 ? 1 : 0);
+    cord1.setAttribute('d', `M${px} ${py + 22} C${px - 10 + sw} ${py + 120} 420 ${1000 + sw} 380 1000`); cord1.style.display = t > t5 + 0.3 ? '' : 'none';
+    const g = EASE.o(prog(t, t5 + 0.45, t5 + 0.95));
+    const away = EASE.io2(prog(t, t5 + 1.5, t5 + 1.95)) * 700;
+    [hand5, hand5c].forEach((h) => { h.setAttribute('transform', `translate(${((1 - g) * 400 - pull * 110 + away).toFixed(1)} ${((1 - g) * -400 + pull * 140 - away).toFixed(1)})`); h.style.display = t > t5 + 2.1 ? 'none' : ''; });
+  });
+  sfx(t5 + 1.1, 'click', {gain: 0.5});
+  // скачок: молния по проводу в стене — бьёт в пустую розетку, телевизору ничего
+  ink(sc, 'M545 170 L520 260 L570 330 L515 420 L575 500 L520 590 L565 680 L540 760', t6 + 0.2, 0.45, 16, {color: CLAY, taper: [0.05, 0.1], until: t7 - 0.05});
+  [[-1, -1], [1, -1], [-1, 1], [1, 1], [0, -1.3]].forEach(([dx, dy], i) => ink(sc, `M510 805 L${510 + dx * 70} ${805 + dy * 60}`, t6 + 0.7 + i * 0.02, 0.12, 6, {color: CLAY2, until: t7 - 0.05}));
+  sfx(t6 + 0.2, 'riser', {dur: 0.5, gain: 0.25}); sfx(t6 + 0.7, 'glitch', {dur: 0.2, gain: 0.35});
+  note(sc, 140, 560, 'цел', t6 + 1.3, {size: 80});
+  ink(sc, 'M300 520 L320 545 L362 490', t6 + 1.45, 0.2, 6);
+  // одна лампа включена: выключатель на проводе — вверх
+  ink(sc, R(856, 1030, 60, 34, 8), t7 + 0.1, 0.2, 4);
+  const sw = el('path', {d: 'M886 1047 L906 1030', stroke: CLAY, 'stroke-width': 9, 'stroke-linecap': 'round'}, sc.top);
+  on((t) => { sw.style.display = t > t7 + 0.2 ? '' : 'none'; sw.setAttribute('transform', `rotate(${(EASE.back(clamp(prog(t, t7 + 0.5, t7 + 0.8))) * -80).toFixed(1)} 886 1047)`); });
+  sfx(t7 + 0.55, 'click', {gain: 0.5});
+  note(sc, 640, 470, 'вкл. — ждём свет', t7 + 0.9, {size: 64});
+  ink(sc, 'M820 500 C850 510 866 520 868 534 M852 522 L868 536 L876 516', t7 + 1.3, 0.2, 3.5);
+  cam(t5 + 0.1, 540, Y + 820, 1.35);
+  cam(t6, 520, Y + 620, 1.0);
+  cam(t7, 820, Y + 780, 1.3);
+  cam(T.s08 - 0.35, 840, Y + 840, 1.35);
+}
+
+// ══ переход: провод лампы уходит вниз к кухне ═══════════════════════
+{
+  const sc = K.place(0, T.s08 - 0.5, T.s08 + 1.2);
+  ink(sc, 'M870 5180 C900 5400 980 5600 900 5800 C860 5900 800 5960 780 6040', T.s08 - 0.45, 0.6, 5);
+  cam(T.s08 + 0.05, 780, 6000 + 760, 1.4, {ease: 'io'});
+  sfx(T.s08 - 0.45, 'whoosh', {dur: 0.5, gain: 0.3});
+}
+
+// ══ D. Плита и угарный газ (s08–s09): кухня из пробы, время перенесено на голос ═
+{
+  const Y = 6000, T8 = T.s08, sc = K.place(Y, T8 - 0.3, T.s10 + 0.05);
+  // время пробы (0..7 с) → время ролика: рисунок быстрее, газ и «сон» — под голос
+  const MAP = [[0, 0], [3.2, 2.0], [4.3, 3.4], [5.2, 4.6], [7, T.s10 - T8]];
+  const f = (x) => { for (let i = 1; i < MAP.length; i++) if (x <= MAP[i][0]) { const [a0, b0] = MAP[i - 1], [a1, b1] = MAP[i]; return T8 + b0 + ((x - a0) / (a1 - a0)) * (b1 - b0); } return T8 + MAP[MAP.length - 1][1]; };
+  const ik = (d, t0, dur, w = 6, o = {}) => ink(sc, d, f(t0), f(t0 + dur) - f(t0), w, o);
+  const cl = (d, t0, color = CLAY, dx = 9, dy = 7, o = {}) => clay(sc, d, f(t0), color, dx, dy, o);
+  const ht = (d, t0, t1, o = {}) => hatch(sc, d, f(t0), f(t1), o);
+  const fl = (x, s = 1) => `M${x - 28 * s} 916 C${x - 44 * s} ${916 - 40 * s} ${x - 14 * s} ${916 - 52 * s} ${x - 8 * s} ${916 - 82 * s} C${x + 4 * s} ${916 - 56 * s} ${x + 18 * s} ${916 - 62 * s} ${x + 14 * s} ${916 - 92 * s} C${x + 48 * s} ${916 - 58 * s} ${x + 44 * s} ${916 - 18 * s} ${x + 28 * s} 916 Z`;
+  [712, 852].forEach((x, i) => { cl(fl(x), 0.0 + i * 0.12, CLAY, 9, 7, {flick: i + 1}); cl(fl(x, 0.55), 0.08 + i * 0.12, CLAY2, 6, 4, {quiet: true, flick: i + 3}); ik(fl(x), 0.02 + i * 0.12, 0.3, 3.5); });
+  sfx(f(0), 'whoosh', {dur: 0.35, gain: 0.3});
+  ik('M600 1250 V940 H900 V1250 H600', 0.05, 0.7, 7); ik('M600 940 L662 898 H962 L900 940', 0.5, 0.35, 6); ik('M962 898 V1206 L900 1250', 0.7, 0.25, 6);
+  ik(R(632, 1014, 236, 168, 16), 0.85, 0.3, 5); ik('M644 988 H856', 0.95, 0.15, 8);
+  [652, 700, 748, 796, 844].forEach((x, i) => ik(O(x, 962, 11), 0.98 + i * 0.035, 0.12, 4));
+  ik(O(712, 919, 54, 13), 1.0, 0.2, 5); ik(O(852, 919, 54, 13), 1.05, 0.2, 5);
+  ht(R(642, 1024, 216, 148, 12), 1.1, 1.5, {angle: -30, gap: 10, w: 2.4}); ht('M900 940 L962 898 V1206 L900 1250 Z', 1.15, 1.5, {angle: 70, gap: 12, w: 2.2});
+  const heat = [712, 852].flatMap((x) => [-16, 0, 16].map((dx) => el('path', {fill: 'none', stroke: INK, 'stroke-width': 3, 'stroke-linecap': 'round', opacity: 0, x0: x + dx}, sc.ink)));
+  on((t) => { const tt = Math.floor(t * 12) / 12; heat.forEach((p, i) => { const x = +p.getAttribute('x0'); let d = ''; for (let k = 0; k <= 8; k++) { const y = 800 - k * 9 - ((tt * 40) % 18); d += (k ? 'L' : 'M') + (x + Math.sin(k * 0.9 + tt * 6 + i) * 6).toFixed(1) + ' ' + y.toFixed(1); } p.setAttribute('d', d); p.style.opacity = 0.55 * clamp(prog(t, f(1.5), f(1.9))) * (1 - clamp(prog(t, f(5.6), f(6.0)))); }); });
+  for (let i = 0; i < 6; i++) ik(`M630 ${650 + i * 42} H1010`, 1.35 + i * 0.025, 0.2, 2, {color: '#14141370'});
+  for (let i = 0; i < 9; i++) ik(`M${640 + i * 46} 640 V870`, 1.4 + i * 0.02, 0.18, 2, {color: '#14141370'});
+  ik('M630 600 H1010 M650 600 L660 616 M990 600 L980 616', 1.5, 0.25, 5);
+  [[690, OLIVE], [770, CLAY], [850, SKY], [930, SAND]].forEach(([x, c], i) => { cl(R(x - 26, 540, 52, 58, 10), 1.6 + i * 0.06, c, 5, 4, {quiet: i > 0}); ik(R(x - 26, 540, 52, 58, 10) + `M${x - 22} 534 H${x + 22}`, 1.6 + i * 0.06, 0.2, 3.5); });
+  // герой
+  const hero = el('g', {}, sc.ink), heroC = el('g', {}, sc.clay), H = {parent: hero}, HC = {parent: heroC, quiet: true};
+  const fade = (t) => 1 - 0.62 * EASE.io2(prog(t, f(4.3), f(5.2)));
+  const hc = (d, t0, color, dx = 9, dy = 7) => cl(d, t0, color, dx, dy, {...HC, fade});
+  hc('M470 778 C430 790 412 830 406 880 L398 1060 C440 1072 540 1072 572 1060 L566 880 C562 830 572 800 580 782 C560 806 480 802 470 778 Z', 2.25, CLAY);
+  hc('M470 778 C430 790 412 830 406 880 L398 1060 C420 1066 440 1068 452 1068 L456 900 C458 850 466 812 478 792 Z', 2.32, CLAY2);
+  hc('M556 826 C590 800 620 776 652 760 L660 798 C622 806 590 850 552 872 Z', 2.36, CLAY);
+  hc('M440 640 C440 590 480 560 525 563 C575 566 600 605 598 650 C600 662 612 672 618 684 C622 692 614 698 604 698 C606 708 602 716 596 722 C592 742 574 756 548 758 C520 760 494 752 476 736 C452 716 440 690 440 640 Z', 1.95, SKIN, 6, 5);
+  const HAND = 'M660 758 C686 750 710 756 720 768 C728 774 724 782 714 782 C722 788 718 796 708 796 C712 802 704 808 694 804 C684 806 672 802 660 798';
+  const handC = hc(HAND + ' Z', 2.4, SKIN, 6, 5);
+  hc('M418 1062 C420 1130 424 1190 428 1236 H464 C466 1190 470 1130 474 1066 C478 1130 492 1190 504 1236 H548 C552 1190 556 1130 556 1060 Z', 2.45, '#3E4A5E', 7, 5);
+  const hairD = 'M436 646 C420 610 432 570 470 556 C480 536 510 530 530 542 C548 528 578 534 588 556 C604 560 614 580 606 598 C596 590 584 592 574 600 C570 586 556 580 540 586 C530 576 510 578 500 590 C488 584 470 590 462 606 C452 616 448 632 446 650 Z';
+  hc(hairD, 2.0, '#2A2420', 4, 3);
+  ik('M440 640 C440 590 480 560 525 563 C575 566 600 605 598 650 C600 662 612 672 618 684 C622 692 614 698 604 698 C606 708 602 716 596 722 C592 742 574 756 548 758 C520 760 494 752 476 736 C452 716 440 690 440 640', 1.7, 0.45, 6, H);
+  ik('M478 668 C462 664 456 690 470 700 C480 704 486 690 482 680', 1.95, 0.15, 4, H);
+  ik(hairD, 1.85, 0.3, 4.5, H);
+  ik('M500 560 C510 548 526 548 536 556 M556 548 C566 542 580 546 586 558 M470 580 C476 570 486 566 496 570', 2.0, 0.2, 2.5, H);
+  const eyeO = el('g', {}, hero);
+  el('path', {d: 'M556 650 Q567 641 578 650 Q567 657 556 650 Z', fill: '#FBFAF6', stroke: INK, 'stroke-width': 2.5}, eyeO);
+  el('circle', {cx: 571, cy: 650, r: 4.5, fill: INK}, eyeO);
+  const eyeC = el('path', {d: 'M556 652 Q567 660 578 652', stroke: INK, 'stroke-width': 3.5, fill: 'none', 'stroke-linecap': 'round', opacity: 0}, hero);
+  ik('M552 630 Q566 622 582 628', 2.0, 0.12, 4, H); ik('M588 712 Q596 716 600 712', 2.05, 0.1, 3, H);
+  ik('M500 752 L504 790 M548 756 L544 786', 2.1, 0.15, 4.5, H);
+  ik('M470 778 C430 790 412 830 406 880 L398 1060 C440 1072 540 1072 572 1060 L566 880 C562 830 572 800 580 782', 2.1, 0.45, 6, H);
+  ik('M470 776 C480 802 560 808 580 780', 2.2, 0.2, 5, H);
+  ik('M436 962 C470 954 520 954 548 964 L540 1012 H446 Z', 2.3, 0.25, 4, H);
+  ik('M512 802 L508 872 M532 802 L538 866', 2.35, 0.15, 3, H);
+  ik('M556 826 C590 800 620 776 652 760 M552 872 C590 850 622 806 660 796 M650 756 C662 766 664 790 660 798', 2.25, 0.3, 5, H);
+  const handI = ik(HAND, 2.4, 0.3, 4.5, H);
+  ik('M548 900 C590 880 640 830 680 812 C696 806 708 812 702 820 C694 826 686 824 680 822', 2.45, 0.25, 4.5, H);
+  ik('M418 1062 C420 1130 424 1190 428 1236 M470 1066 C468 1130 466 1190 464 1236 M484 1066 C490 1130 498 1190 504 1236 M556 1060 C556 1130 552 1190 548 1236', 2.45, 0.3, 5, H);
+  ik('M412 1236 C416 1220 470 1220 476 1240 C478 1252 418 1254 412 1246 Z M494 1236 C498 1220 556 1222 568 1240 C572 1252 502 1254 494 1246 Z', 2.6, 0.25, 4.5, H);
+  ht('M406 880 L398 1060 C420 1066 440 1068 452 1068 L456 900 C458 850 466 812 478 792 C450 800 412 830 406 880 Z', 2.55, 2.9, {angle: 60, gap: 9, w: 2, parent: hero});
+  // комната
+  ik(R(90, 360, 270, 320, 6), 2.6, 0.3, 5); ik('M225 360 V680 M90 520 H360', 2.75, 0.2, 4);
+  cl(R(102, 372, 246, 296), 2.8, SKY, 8, 6, {op: 0.9, quiet: true});
+  cl(O(296, 430, 28), 2.9, PAPER, 0, 0, {quiet: true}); ik(O(296, 430, 28), 2.9, 0.2, 3);
+  ik('M102 668 C114 640 132 652 140 628 C146 612 160 618 162 600 M346 668 C336 642 320 654 314 630 M102 380 C124 396 134 384 150 404 C158 414 170 408 174 422 M346 380 C330 398 342 414 318 422', 2.95, 0.4, 2.5);
+  ik('M80 690 H380', 2.7, 0.2, 8);
+  cl('M150 688 L160 650 H200 L210 688 Z', 3.0, CLAY, 5, 4, {quiet: true}); ik('M150 688 L160 650 H200 L210 688', 3.0, 0.15, 3.5);
+  ik('M180 650 C170 620 150 610 140 590 M180 650 C186 616 206 604 222 596 M180 650 C180 620 184 600 178 580', 3.05, 0.25, 3);
+  cl(R(292, 642, 18, 46, 3), 3.05, '#FBF6EA', 3, 2, {quiet: true}); ik(R(292, 642, 18, 46, 3), 3.05, 0.12, 3);
+  cl('M301 638 C292 624 298 614 301 602 C306 614 312 624 301 638 Z', 3.12, CLAY, 3, 2, {flick: 7});
+  for (let i = 0; i < 7; i++) ik(`M${110 + i * 36} 760 V880`, 3.0 + i * 0.025, 0.12, 9);
+  ik('M100 760 H352 M100 880 H352', 3.05, 0.15, 3);
+  ik(O(955, 380, 40), 3.15, 0.25, 5); ik('M955 380 V352 M955 380 L976 390', 3.3, 0.12, 4);
+  ik('M40 1250 H1040', 2.5, 0.35, 4);
+  ht('M590 1252 H980 L1010 1280 H600 Z', 2.6, 2.9, {angle: -40, gap: 9, w: 2}); ht('M400 1250 H580 L590 1276 H400 Z', 2.7, 2.95, {angle: -40, gap: 9, w: 2});
+  // газ: пунктир от конфорок, живая пометка
+  const co = ['M712 820 C690 760 760 720 700 660 C650 610 700 570 640 552 C604 542 596 590 570 604', 'M852 820 C870 750 800 710 840 640 C880 570 820 520 760 500 C700 482 660 520 610 552', 'M780 830 C770 760 830 700 770 640 C730 600 780 520 712 470'];
+  const coE = co.map((d) => el('path', {d, fill: 'none', stroke: INK, 'stroke-width': 4.5, 'stroke-linecap': 'round', 'stroke-dasharray': '1 16'}, sc.ink));
+  on((t) => coE.forEach((p, i) => { p.style.strokeDashoffset = (-t * 70 - i * 9).toFixed(1); p.style.opacity = EASE.io2(prog(t, f(3.3 + i * 0.15), f(3.9 + i * 0.15))); }));
+  note(sc, 400, 380, 'CO —', f(3.5), {size: 74}); note(sc, 400, 440, 'без цвета', f(3.7), {size: 58}); note(sc, 400, 494, 'и запаха', f(3.9), {size: 58});
+  ik('M560 470 C590 470 616 492 626 524 M606 514 L627 527 L634 503', 4.05, 0.25, 3.5);
+  sfx(f(3.5), 'paper', {dur: 0.6, gain: 0.22});
+  // газ делает своё: бледнеет, глаза закрываются, кренится
+  const rub = (t) => (t > f(2.5) && t < f(4.4) ? Math.sin(t * 14) * 3.5 : 0);
+  on((t) => {
+    const r = rub(t).toFixed(2); handI.forEach((s) => s.el.setAttribute('transform', `translate(${r} 0)`)); handC.p.style.translate = `${r}px 0`;
+    const c = EASE.io2(prog(t, f(4.4), f(4.8)));
+    hero.style.opacity = 0.35 + 0.65 * fade(t);
+    eyeO.style.opacity = t < f(1.95) ? 0 : 1 - c; eyeC.setAttribute('opacity', c);
+    const tilt = (EASE.io2(prog(t, f(4.4), f(5.4))) * 4).toFixed(2), br = (1 + Math.sin(t * 2.4) * 0.006).toFixed(4);
+    const tr = `rotate(${tilt} 490 1240) translate(490 1240) scale(1 ${br}) translate(-490 -1240)`; hero.setAttribute('transform', tr); heroC.setAttribute('transform', tr);
+  });
+  sfx(f(4.4), 'heartbeat', {}); sfx(f(5.0), 'heartbeat', {});
+  ik('M800 790 C930 790 1020 890 1020 1020 C1020 1150 920 1250 800 1250 C670 1250 585 1150 585 1020 C585 890 680 790 812 794', 5.15, 0.55, 22, {color: CLAY, ease: 'io', taper: [0.04, 0.1]});
+  ik('M655 865 L955 1180', 5.65, 0.25, 22, {color: CLAY, taper: [0.05, 0.2]});
+  sfx(f(5.15), 'whoosh', {dur: 0.5}); sfx(f(5.9), 'impact', {size: 0.6, gain: 0.5});
+  cam(f(0.0), 790, Y + 900, 1.5);
+  cam(f(1.2), 760, Y + 1000, 1.36);
+  cam(f(1.9), 590, Y + 860, 1.3);
+  cam(f(2.6), 540, Y + 880, 1.05);
+  cam(f(3.4), 620, Y + 720, 1.25);
+  cam(f(4.6), 560, Y + 760, 1.3);
+  cam(f(5.6), 600, Y + 960, 1.0);
+  cam(T.s10 - 0.45, 600, Y + 950, 1.03);
+}
+
+// ══ переход: газовая труба вниз — к плану квартиры ═══════════════════
+{
+  const sc = K.place(0, T.s10 - 0.5, T.s10 + 1.2);
+  ink(sc, 'M930 7250 C960 7450 900 7650 760 7800 C680 7880 620 7950 600 8060', T.s10 - 0.45, 0.6, 5);
+  cam(T.s10 + 0.05, 540, 8000 + 790, 1.0, {ease: 'io'});
+  sfx(T.s10 - 0.45, 'whoosh', {dur: 0.5, gain: 0.3});
+}
+
+// ══ E. План квартиры: тепло в одну комнату, полотенце под дверь (s10–s11) ═
+{
+  const Y = 8000, sc = K.place(Y, T.s10 - 0.3, T.s12 + 0.05), t10 = T.s10, t11 = T.s11;
+  ink(sc, R(140, 380, 800, 820), t10, 0.6, 12);
+  ink(sc, 'M520 380 V560 M520 640 V820 H600 M680 820 H940 M140 760 H300 M380 760 H520 M600 820 V960 M600 1040 V1200', t10 + 0.25, 0.5, 10);
+  [['кухня', 200, 450], ['спальня', 640, 450], ['комната', 200, 860], ['ванная', 690, 900]].forEach(([s, x, y], i) => note(sc, x, y, s, t10 + 0.6 + i * 0.1, {size: 46}));
+  const rooms = [[330, 570], [730, 600], [370, 980], [770, 1010]];
+  const blobs = rooms.map(([x, y], i) => { const g = el('g', {}, sc.clay); el('path', {d: O(0, 0, 90, 70), fill: CLAY, filter: 'url(#clayTex)', opacity: 0.7}, g); return {g, x, y, i}; });
+  on((t) => blobs.forEach((b) => {
+    const a = EASE.back(clamp(prog(t, t10 + 0.6 + b.i * 0.08, t10 + 0.95 + b.i * 0.08))), m = b.i === 1 ? 0 : EASE.io2(prog(t, t10 + 1.1 + b.i * 0.12, t10 + 2.0 + b.i * 0.12));
+    const x = lerp(b.x, 730, m), y = lerp(b.y, 600, m), s = b.i === 1 ? 1 + 0.5 * EASE.io2(prog(t, t10 + 1.3, t10 + 2.4)) : 1 - 0.7 * m;
+    b.g.setAttribute('transform', `translate(${x} ${y}) scale(${(a * s).toFixed(3)})`); b.g.style.display = a > 0.01 && t < T.s12 ? '' : 'none';
+  }));
+  sfx(t10 + 1.2, 'swish', {gain: 0.25});
+  // двери закрываются: створка-дуга поворачивается в проём
+  [[520, 560, 90, 0], [300, 760, 0, 1], [600, 960, 90, 2]].forEach(([x, y, a0, i]) => {
+    const leaf = el('path', {d: `M${x} ${y} l80 0`, stroke: INK, 'stroke-width': 8, 'stroke-linecap': 'round'}, sc.top);
+    on((t) => { const q = EASE.back(clamp(prog(t, t10 + 1.8 + i * 0.15, t10 + 2.2 + i * 0.15))); leaf.style.display = t > t10 + 0.5 && t < T.s12 ? '' : 'none'; leaf.setAttribute('transform', `rotate(${(a0 === 90 ? 90 - q * 90 : -60 + q * 60).toFixed(1)} ${x} ${y})`); });
+    sfx(t10 + 2.05 + i * 0.15, 'thud', {gain: 0.25});
+  });
+  // холод заполняет остальные комнаты
+  [[146, 386, 368, 368], [146, 766, 448, 428], [606, 826, 328, 368]].forEach(([x, y, w, h], i) => clay(sc, R(x, y, w, h), SKY, t10 + 2.3 + i * 0.08, 0, 0, {op: 0.35, quiet: true}));
+  // щель под дверью спальни: холодные струйки — и полотенце
+  const wisps = [0, 1, 2].map((k) => el('path', {fill: 'none', stroke: SKY2, 'stroke-width': 5, 'stroke-linecap': 'round', opacity: 0}, sc.top));
+  on((t) => wisps.forEach((p, k) => { const tt = Math.floor(t * 12) / 12; let d = ''; for (let j = 0; j <= 6; j++) d += (j ? 'L' : 'M') + (430 + j * 14 + (tt * 50) % 14).toFixed(1) + ' ' + (585 + k * 14 + Math.sin(j + tt * 8 + k) * 5).toFixed(1); p.setAttribute('d', d); p.style.opacity = 0.9 * clamp(prog(t, t11 + 0.1, t11 + 0.3)) * (1 - clamp(prog(t, t11 + 1.2, t11 + 1.5))); }));
+  const towel = el('g', {}, sc.clay);
+  el('path', {d: R(-14, -44, 28, 88, 14), fill: OLIVE, filter: 'url(#clayTex)'}, towel);
+  el('path', {d: 'M-14 -20 H14 M-14 0 H14 M-14 20 H14', stroke: PAPER, 'stroke-width': 4}, towel);
+  el('path', {d: R(-14, -44, 28, 88, 14), fill: 'none', stroke: INK, 'stroke-width': 4}, towel);
+  on((t) => { const q = EASE.back(clamp(prog(t, t11 + 0.7, t11 + 1.2))); towel.style.display = t > t11 + 0.6 && t < T.s12 ? '' : 'none'; towel.setAttribute('transform', `translate(${lerp(420, 528, q).toFixed(1)} 600) rotate(${(1 - q) * 200})`); });
+  sfx(t11 + 0.75, 'fold', {gain: 0.4});
+  note(sc, 300, 760, 'щель закрыта', t11 + 1.3, {size: 48});
+  cam(t10 + 0.05, 540, Y + 790, 1.0);
+  cam(t11 - 0.1, 540, Y + 790, 1.04);
+  cam(t11 + 0.5, 520, Y + 620, 2.1);
+  cam(T.s12 - 0.35, 520, Y + 630, 2.15);
+}
+
+// ══ переход: труба — к ванной ═════════════════════════════════════════
+{
+  const sc = K.place(0, T.s12 - 0.5, T.s12 + 1.2);
+  ink(sc, 'M760 9200 C820 9400 780 9600 640 9760 C580 9830 520 9900 500 10120', T.s12 - 0.45, 0.6, 5);
+  cam(T.s12 + 0.05, 540, 10000 + 800, 1.25, {ease: 'io'});
+  sfx(T.s12 - 0.45, 'whoosh', {dur: 0.5, gain: 0.3});
+}
+
+// ══ F. Вода: кран и ведро, разрез дома, свет дали (s12–s14) ══════════
+{
+  const Y = 10000, sc = K.place(Y, T.s12 - 0.3, DUR + 1), t12 = T.s12, t13 = T.s13, t14 = T.s14;
+  for (let i = 0; i < 6; i++) ink(sc, `M200 ${360 + i * 60} H880`, t12 + 0.05 + i * 0.02, 0.15, 2, {color: '#14141360'});
+  for (let i = 0; i < 12; i++) ink(sc, `M${200 + i * 62} 360 V660`, t12 + 0.08 + i * 0.015, 0.12, 2, {color: '#14141360'});
+  ink(sc, 'M300 300 V420 C300 470 340 490 400 490 H520 C560 490 580 510 580 550 V580 M300 420 H360 C380 420 400 440 400 460 M560 580 H600', t12, 0.45, 9);
+  ink(sc, R(330, 360, 140, 30, 10) + 'M400 360 V330', t12 + 0.3, 0.2, 5);
+  clay(sc, R(330, 360, 140, 30, 10), CLAY, t12 + 0.35, 5, 4);
+  ink(sc, 'M380 1000 L700 1000 L670 1240 L410 1240 Z M380 1000 C400 900 680 900 700 1000', t12 + 0.15, 0.4, 6);
+  const water = el('path', {fill: SKY, filter: 'url(#clayTex)'}, sc.clay), level = el('path', {fill: SKY, filter: 'url(#clayTex)', opacity: 0.85}, sc.clay);
+  on((t) => {
+    const on1 = t > t12 + 0.45 && t < t13 + 0.2, tt = Math.floor(t * 12) / 12;
+    const lv = lerp(1236, 1050, EASE.io2(prog(t, t12 + 0.5, t13)));
+    let d = 'M572 584'; for (let k = 0; k <= 10; k++) d += `L${(572 + Math.sin(k + tt * 9) * 3).toFixed(1)} ${(584 + k * (lv - 584) / 10).toFixed(1)}`;
+    for (let k = 10; k >= 0; k--) d += `L${(592 + Math.sin(k + tt * 9 + 1) * 3).toFixed(1)} ${(584 + k * (lv - 584) / 10).toFixed(1)}`;
+    water.setAttribute('d', d + 'Z'); water.style.display = on1 ? '' : 'none';
+    const wl = (y) => 380 + ((y - 1000) / 240) * 30;
+    level.setAttribute('d', `M${wl(lv) + 2} ${lv} L${1080 - wl(lv) - 2} ${lv} L668 1238 L412 1238 Z`); level.style.display = t > t12 + 0.5 && t < t13 + 1.0 ? '' : 'none';
+  });
+  sfx(t12 + 0.45, 'bubble', {gain: 0.3}); sfx(t12 + 0.9, 'bubble', {gain: 0.25}); sfx(t12 + 1.4, 'bubble', {gain: 0.2});
+  note(sc, 720, 820, 'про запас', t12 + 1.0, {size: 58});
+  // разрез дома: стояк от насоса в подвале, вода уходит сверху вниз
+  const Sy = 1500;
+  ink(sc, R(260, Sy, 560, 1080), t13 - 0.1, 0.45, 8);
+  for (let i = 1; i < 9; i++) ink(sc, `M260 ${Sy + i * 120} H820`, t13 + i * 0.02, 0.15, 3);
+  ink(sc, R(700, Sy + 1100, 120, 80, 10) + O(760, Sy + 1140, 22), t13 + 0.1, 0.25, 5);
+  note(sc, 260, Sy + 1230, 'насос без света ↗', t13 + 0.3, {size: 64});
+  ink(sc, `M760 ${Sy + 1100} V${Sy + 20}`, t13 + 0.15, 0.35, 12);
+  const col = el('path', {fill: SKY, filter: 'url(#clayTex)'}, sc.clay);
+  on((t) => {
+    const down = EASE.io2(prog(t, t13 + 0.6, t13 + 2.6)), up = EASE.io2(prog(t, t14 + 0.3, t14 + 1.6));
+    const top = lerp(Sy + 30, Sy + 1040, down * (1 - up));
+    col.setAttribute('d', `M752 ${top} H768 V${Sy + 1096} H752 Z`); col.style.display = t > t13 + 0.3 ? '' : 'none';
+  });
+  for (let i = 0; i < 9; i++) {
+    const y = Sy + i * 120 + 60;
+    ink(sc, `M760 ${y} H790 V${y + 20}`, t13 + 0.3 + i * 0.02, 0.12, 4);
+    for (let w = 0; w < 3; w++) {
+      const x = 300 + w * 110, d = R(x, y - 20, 70, 56, 4);
+      ink(sc, d, t13 + 0.25 + i * 0.015 + w * 0.01, 0.12, 3);
+      clay(sc, d, SAND, t14 + 0.2 + (8 - i) * 0.07 + w * 0.02, 0, 0, {quiet: true});
+    }
+  }
+  note(sc, 170, Sy + 80, '9 эт.', t13 + 0.5, {size: 64}); note(sc, 170, Sy + 1040, '1 эт.', t13 + 0.55, {size: 64});
+  sfx(t13 + 0.6, 'downer', {dur: 1.5, gain: 0.3});
+  // свет дали: окна загораются снизу вверх, вода поднимается обратно
+  sfx(t14 + 0.2, 'riser', {dur: 0.9, gain: 0.3}); sfx(t14 + 1.0, 'chime', {gain: 0.35});
+  note(sc, 300, Sy - 60, 'свет дали!', t14 + 1.1, {size: 96});
+  cam(t12 + 0.05, 540, Y + 800, 1.25);
+  cam(t13 - 0.1, 540, Y + 860, 1.2);
+  cam(t13 + 0.5, 520, Y + Sy + 720, 0.72);
+  cam(t14, 520, Y + Sy + 720, 0.74);
+  cam(DUR, 520, Y + Sy + 680, 0.8);
+}
+
+E.cams.sort((a, b) => a.t - b.t); // ключи из разных сцен — по времени
+E.EVENTS.push([0, 'drone', {dur: DUR, g: 0.22}]);
+E.start();
+</script>
+</body></html>
